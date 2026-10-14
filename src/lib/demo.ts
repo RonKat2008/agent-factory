@@ -59,3 +59,65 @@ export function cannedLlmOutput(format: "text" | "cited_bullets" | "issue_labels
 }
 
 export const CANNED_JUDGE_RESULT = { pass: true, reason: "DEMO_MODE: canned pass" } as const;
+
+// ---- Canned builder / editor outputs (DEMO_MODE; Task 5) ----
+import type { AgentSpec as BuilderSpec } from "./spec";
+
+/** Canned build: an HN AI-agents digest, whatever the request says. */
+export function cannedBuildSpec(request: string): BuilderSpec {
+  return {
+    name: "AI agents digest",
+    schedule: "0 16 * * 1-5",
+    steps: [
+      { id: "hn", block: "hn_search", params: { query: "AI agents", minPoints: 20, sinceHours: 24, limit: 15 } },
+      {
+        id: "top",
+        block: "llm",
+        params: {
+          instruction: `Pick the 3 most important items for this request: ${request.slice(0, 200)}. One bullet each, cite the item URL.`,
+          input: "{{steps.hn.items}}",
+          format: "cited_bullets",
+        },
+      },
+      { id: "post", block: "send_slack", params: { message: "*AI agents digest*\n{{steps.top.markdown}}", skipIfEmpty: true } },
+    ],
+    tests: [
+      { kind: "nonempty", addedBy: "build" },
+      { kind: "has_citations", addedBy: "build" },
+      { kind: "max_items", config: { max: 3 }, addedBy: "build" },
+    ],
+    requiresApproval: false,
+    plan: {
+      runs: "Every weekday at 9:00 AM Pacific",
+      checks: "Hacker News stories about AI agents",
+      does: "Picks the 3 most important and summarizes each with a link",
+      sendsTo: "Slack",
+      asksBefore: "Nothing",
+    },
+  };
+}
+
+/** Canned edit: adds a points filter step and a test that encodes it. */
+export function cannedEditResult(spec: BuilderSpec, instruction: string) {
+  const hasFilter = spec.steps.some((s) => s.id === "popular");
+  const steps = hasFilter
+    ? spec.steps
+    : spec.steps.flatMap((s) => (s.id === "hn" ? [s, { id: "popular", block: "filter" as const, params: { input: "{{steps.hn.items}}", field: "points", op: "gte" as const, value: 100 } }] : [s]));
+  const rewired = steps.map((s) =>
+    s.block === "llm" && typeof s.params.input === "string" ? { ...s, params: { ...s.params, input: s.params.input.replace("steps.hn.items", "steps.popular.items") } } : s,
+  ) as BuilderSpec["steps"];
+  return {
+    spec: {
+      ...spec,
+      steps: rewired,
+      tests: [...spec.tests, { kind: "llm_judge" as const, config: { rubric: `Satisfies: ${instruction.slice(0, 200)}` }, addedBy: "user" as const }],
+    },
+    changeSummary: "Only include posts with 100+ points",
+    costUsd: 0,
+  };
+}
+
+/** Canned revise: no change (DEMO_MODE dry runs use canned judge results that pass). */
+export function cannedReviseResult(spec: BuilderSpec) {
+  return { spec, changeSummary: "No change needed (demo mode)", costUsd: 0 };
+}

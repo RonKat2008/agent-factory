@@ -1,8 +1,11 @@
+import { after } from "next/server";
 import { z } from "zod";
 import { UUID_RE, guard, json, jsonError } from "@/lib/api-util";
+import { proposeFromFeedback } from "@/lib/factory/feedback-edit";
 import { attachFeedbackComment, insertFeedback, logEvent } from "@/lib/repo";
 
 export const dynamic = "force-dynamic";
+export const maxDuration = 60;
 
 const Body = z.object({
   runId: z.string().regex(UUID_RE),
@@ -21,6 +24,7 @@ export function POST(req: Request): Promise<Response> {
     const r = attached ?? (await insertFeedback({ runId, rating, comment: text }));
     if (!r) return jsonError("run not found", 404);
     await logEvent(r.agentId, "feedback", text ? `👎 "${text.slice(0, 140)}"` : rating === "useful" ? "👍 Useful" : "👎 Not useful", { runId, rating, comment: text });
+    if (rating === "not_useful" && text) after(() => proposeFromFeedback(r.agentId, text));
     return json({ ok: true });
   });
 }
