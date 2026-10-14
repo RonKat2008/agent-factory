@@ -11,7 +11,7 @@ export async function runAgentWorkflow(input: RunAgentWorkflowInput) {
   try {
     const ctx = await loadStep(agentId, runId);
     if (!ctx) return { runId, status: "failed" as const };
-    const holdSend = ctx.requiresApproval;
+    const holdSend = true; // test-gated delivery: send_slack runs dry, finalizeStep delivers if tests pass
     const outputs: Record<string, unknown> = {};
     const outcomes: Record<string, StepOutcome> = {};
     let stepError: StepError | null = null;
@@ -26,7 +26,7 @@ export async function runAgentWorkflow(input: RunAgentWorkflowInput) {
       }
       outputs[step.id] = o.output;
     }
-    const result = await finalizeStep(agentId, runId, ctx.spec, outcomes, stepError);
+    const result = await finalizeStep(agentId, runId, ctx.spec, outcomes, stepError, ctx.requiresApproval);
     return { runId, status: result.status, kind };
   } catch (e) {
     await failStep(agentId, runId, e instanceof Error ? e.message : String(e));
@@ -70,10 +70,11 @@ async function finalizeStep(
   spec: AgentSpec,
   outcomes: Record<string, StepOutcome>,
   stepError: StepError | null,
+  requiresApproval: boolean,
 ): Promise<ExecResult> {
   "use step";
   const { finalizeExec, afterLiveRun } = await import("@/lib/runtime/run-agent");
-  const result = await finalizeExec({ runId, spec, outcomes, stepError });
+  const result = await finalizeExec({ agentId, runId, spec, outcomes, stepError, requiresApproval });
   await afterLiveRun(agentId, result);
   return result;
 }

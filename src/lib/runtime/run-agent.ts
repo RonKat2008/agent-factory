@@ -40,8 +40,8 @@ export type StepOutcome = {
   resolvedParams?: unknown;
   error?: string;
   costUsd: number;
-  /** send_slack held for approval: it ran in dry mode and has something to send. */
-  held?: boolean;
+  /** send_slack ran in dry mode in a live run; this message is delivered only if tests pass (and no approval hold). */
+  pendingSend?: string;
 };
 
 export type ExecInput = {
@@ -94,7 +94,7 @@ export async function executeStepAt(a: {
   step: Step;
   outputs: Record<string, unknown>; // step id -> output of earlier ok steps
   dryRun: boolean;
-  holdSend: boolean; // approval required: run send_slack in dry mode
+  holdSend: boolean; // live run: run send_slack in dry mode; finalizeExec delivers after tests pass
 }): Promise<StepOutcome> {
   const { step } = a;
   const started = Date.now();
@@ -116,7 +116,8 @@ export async function executeStepAt(a: {
     outcome = r.ok
       ? { ok: true, output: r.output, resolvedParams: resolved, costUsd }
       : { ok: false, resolvedParams: resolved, error: r.error, costUsd };
-    if (holding && r.ok && typeof (r.output as { wouldSend?: unknown }).wouldSend === "string") outcome.held = true;
+    const wouldSend = r.ok ? (r.output as { wouldSend?: unknown }).wouldSend : undefined;
+    if (holding && typeof wouldSend === "string" && wouldSend.trim()) outcome.pendingSend = wouldSend;
   }
   await insertStepRun({
     runId: a.runId,
@@ -168,15 +169,30 @@ function describeFailure(stepError: StepError | null, failed: TestResultRow[]): 
   return null;
 }
 
-/** Derives output, runs (or skips) tests, persists results and finishes the run row. */
+export const JUDGE_KIND = "llm_judge";
+
+/** True when the only failures are llm_judge tests (no step error, no deterministic test failure). */
+export function isJudgeOnlyFailure(r: Pick<ExecResult, "stepError" | "failedTests">): boolean {
+  return !r.stepError && r.failedTests.length > 0 && r.failedTests.every((t) => t.kind === JUDGE_KIND);
+}
+
+/**
+ * Derives output, runs (or skips) tests, persists results and finishes the run row.
+ * Test-gated delivery: a pending send (live runs) is delivered ONLY when every test passes and no approval hold applies.
+ */
 export async function finalizeExec(a: {
+  agentId: string;
   runId: string;
   spec: AgentSpec;
   outcomes: Record<string, StepOutcome>;
   stepError: StepError | null;
+  requiresApproval: boolean;
 }): Promise<ExecResult> {
   const lite: Record<string, StepResultLite> = a.outcomes;
-  const output = deriveRunOutput(a.spec, lite);
+  const pending = Object.values(a.outcomes).find((o) => o.pendingSend)?.pendingSend;
+  // Tests judge what WOULD be posted, so no_post_if_unchanged still catches a would-be post.
+  const derived = deriveRunOutput(a.spec, lite);
+  const output: RunOutput = pending ? { ...derived, posted: true } : derived;
   let costUsd = Object.values(a.outcomes).reduce((s, o) => s + (o.costUsd ?? 0), 0);
 
   let tests: TestResultRow[];
@@ -188,17 +204,31 @@ export async function finalizeExec(a: {
   }
   await insertTestResults(a.runId, tests);
   const failedTests = tests.filter((t) => !t.passed);
-  const held = Object.values(a.outcomes).some((o) => o.held);
-  const status: RunStatus = a.stepError || failedTests.length > 0 ? "failed" : held ? "awaiting_approval" : "succeeded";
-  await finishRun(a.runId, { status, output, error: describeFailure(a.stepError, failedTests), costUsd });
-  return { runId: a.runId, status, output, tests, failedTests, stepError: a.stepError, costUsd };
+
+  let status: RunStatus;
+  let posted = false;
+  let error: string | null = null;
+  if (a.stepError || failedTests.length > 0) {
+    status = "failed";
+    error = isJudgeOnlyFailure({ stepError: a.stepError, failedTests })
+      ? `held: ${failedTests.map((t) => t.detail).join("; ")}`
+      : describeFailure(a.stepError, failedTests);
+  } else if (pending && a.requiresApproval) {
+    status = "awaiting_approval";
+  } else {
+    status = "succeeded";
+    if (pending) posted = (await deliver({ agentId: a.agentId, runId: a.runId, message: pending })).sent;
+  }
+  const finalOutput: RunOutput = { ...output, posted };
+  await finishRun(a.runId, { status, output: finalOutput, error, costUsd });
+  return { runId: a.runId, status, output: finalOutput, tests, failedTests, stepError: a.stepError, costUsd };
 }
 
 /** Executes a spec in one process (no durability). The run row must already exist. */
 export async function executeSpec(input: ExecInput): Promise<ExecResult> {
   const { agentId, spec, runId } = input;
   const dryRun = isDryKind(input.kind);
-  const holdSend = input.requiresApproval && !dryRun;
+  const holdSend = !dryRun; // every live send is deferred until tests pass
   const outputs: Record<string, unknown> = {};
   const outcomes: Record<string, StepOutcome> = {};
   let stepError: StepError | null = null;
@@ -214,7 +244,7 @@ export async function executeSpec(input: ExecInput): Promise<ExecResult> {
       }
       outputs[step.id] = o.output;
     }
-    return await finalizeExec({ runId, spec, outcomes, stepError });
+    return await finalizeExec({ agentId, runId, spec, outcomes, stepError, requiresApproval: input.requiresApproval && !dryRun });
   } catch (e) {
     return failRun(runId, (e as Error).message);
   }
@@ -271,6 +301,12 @@ export async function loadRun(agentId: string): Promise<Omit<PreparedRun, "runId
 export async function afterLiveRun(agentId: string, result: ExecResult): Promise<void> {
   const agent = await getAgent(agentId);
   if (!agent) return;
+  if (result.status === "failed" && isJudgeOnlyFailure(result)) {
+    const detail = result.failedTests.map((t) => t.detail).join("; ");
+    await logEvent(agentId, "run_failed", `Held the post — quality check failed: ${detail}`, { runId: result.runId, held: true });
+    if (agent.status === "live") await updateAgent(agentId, { nextRunAt: nextRunAt(agent.schedule) });
+    return;
+  }
   if (result.status === "failed") {
     const why = describeFailure(result.stepError, result.failedTests) ?? "Run failed";
     await updateAgent(agentId, { status: "broken" });

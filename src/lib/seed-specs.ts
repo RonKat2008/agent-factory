@@ -109,7 +109,7 @@ export function seedAgents(): SeedAgent[] {
           { kind: "no_post_if_unchanged", addedBy: "build" },
           {
             kind: "llm_judge",
-            config: { rubric: "Each bullet names a version and cites its release URL; risks are flagged with ⚠️ when the release mentions breaking changes, deprecations or security." },
+            config: { rubric: "Each bullet names a release version and cites its URL; bullets that mention breaking changes, deprecations or security issues flag them with ⚠️." },
             addedBy: "build",
           },
         ],
