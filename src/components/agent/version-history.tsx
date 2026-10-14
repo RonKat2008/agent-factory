@@ -2,6 +2,7 @@
 import { useMemo, useState } from "react";
 import { ChevronRight, FlaskConical, Loader2, User, Wrench } from "lucide-react";
 import { toast } from "sonner";
+import { track } from "@vercel/analytics";
 import { acceptVersion, rejectVersion } from "@/lib/api-client";
 import type { AgentTest, AgentVersion } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -115,6 +116,7 @@ function VersionRow({
     try {
       if (kind === "accept") await acceptVersion(agentId, version.version);
       else await rejectVersion(agentId, version.version);
+      if (kind === "accept") track("version_accepted");
       toast.success(kind === "accept" ? `v${version.version} accepted` : `v${version.version} rejected`);
       onChanged();
     } catch (e) {

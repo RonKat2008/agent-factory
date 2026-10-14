@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Loader2, RotateCcw, Rocket } from "lucide-react";
+import { track } from "@vercel/analytics";
 import { createAgent, getAgent, getFeed, goLive } from "@/lib/api-client";
 import type { AgentDetail, FeedEvent } from "@/lib/types";
 import { BTN_PRIMARY, BTN_SECONDARY, LABEL } from "@/components/ui-tokens";
@@ -62,6 +63,7 @@ export function CreateFlow() {
     if (!text || submitting) return;
     setSubmitting(true);
     setSubmitError(null);
+    track("agent_build_started");
     try {
       const id = MOCK_MODE ? MOCK_AGENT_ID : (await createAgent(text)).agentId;
       setDetail(null);
@@ -87,6 +89,7 @@ export function CreateFlow() {
     setGoing(true);
     try {
       if (!MOCK_MODE) await goLive(agentId);
+      track("agent_go_live");
       toast.success("Agent is live");
       router.push(`/agents/${agentId}`);
     } catch (err) {
@@ -97,7 +100,7 @@ export function CreateFlow() {
 
   if (!agentId) {
     return (
-      <div className="px-4 py-8 sm:px-8 sm:py-14">
+      <div className="py-6 sm:py-10">
         <PromptStage value={request} onChange={setRequest} onSubmit={submit} pending={submitting} error={submitError} />
       </div>
     );
@@ -107,7 +110,7 @@ export function CreateFlow() {
   const lastError = [...events].reverse().find((e) => e.type === "needs_human" || e.type === "test_failed");
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-8 sm:py-10">
+    <div className="mx-auto w-full max-w-4xl py-4 sm:py-6">
       <p className={LABEL}>New agent / 02 build</p>
       <blockquote className="mt-2 border-l-2 border-stone-900 pl-4 text-xl font-medium leading-snug text-stone-900 sm:text-2xl">
         “{request.trim()}”

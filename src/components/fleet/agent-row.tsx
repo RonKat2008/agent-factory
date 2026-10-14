@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { Loader2, Play, Wrench } from "lucide-react";
 import { toast } from "sonner";
+import { track } from "@vercel/analytics";
 import { runNow } from "@/lib/api-client";
 import type { Agent, AgentStatus } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
@@ -39,6 +40,7 @@ export function AgentRow({ agent: a, now }: { agent: Agent; now: number }) {
     setPending(true);
     try {
       await runNow(a.id);
+      track("run_now");
       toast.success("Run started", { description: a.name });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not start run");

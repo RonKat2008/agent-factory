@@ -42,7 +42,7 @@ export function FleetBoard() {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-[1440px] space-y-4 px-4 py-5 sm:px-6">
+    <div className="space-y-4">
       <StatStrip stats={stats} />
       {error && (
         <p role="alert" className="rounded-[3px] border border-red-300 bg-red-50 px-3 py-2 font-mono text-xs text-red-800">

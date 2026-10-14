@@ -4,7 +4,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   return (
     <>
       <TopBar />
-      <main className="min-w-0 flex-1">{children}</main>
+      <main className="mx-auto w-full min-w-0 max-w-[1440px] flex-1 px-4 py-5 sm:px-6 lg:px-8">{children}</main>
     </>
   );
 }

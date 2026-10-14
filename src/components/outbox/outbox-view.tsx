@@ -42,7 +42,7 @@ export function OutboxView() {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-5 sm:px-6">
+    <div className="mx-auto w-full max-w-3xl space-y-4">
       <div>
         <h1 className="text-xl font-semibold text-stone-900">Outbox</h1>
         <p className="mt-1 text-[13px] text-stone-500">

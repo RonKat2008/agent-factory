@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { AlertTriangle, Loader2, Pause, Play, Sparkles, Zap } from "lucide-react";
 import { toast } from "sonner";
+import { track } from "@vercel/analytics";
 import { approveRun, editAgent, runNow, setApproval, setPaused } from "@/lib/api-client";
 import type { Agent, Run } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -35,7 +36,10 @@ export function SteeringPanel({ agent, runs, onChanged }: { agent: Agent; runs: 
     const text = instruction.trim();
     if (!text) return;
     const done = await act("edit", () => editAgent(agent.id, text), (r) => `v${r.version} created — re-testing…`);
-    if (done) setInstruction("");
+    if (done) {
+      track("edit_applied");
+      setInstruction("");
+    }
   }
 
   return (
@@ -85,7 +89,7 @@ export function SteeringPanel({ agent, runs, onChanged }: { agent: Agent; runs: 
           <button
             className={cn(BTN_SECONDARY, "flex-1")}
             disabled={busy !== null || agent.currentVersion == null}
-            onClick={() => act("run", () => runNow(agent.id), () => "Run started")}
+            onClick={() => act("run", () => runNow(agent.id).then((r) => (track("run_now"), r)), () => "Run started")}
           >
             {busy === "run" ? <Loader2 className="size-3.5 animate-spin" /> : <Zap className="size-3.5" />} Run now
           </button>
