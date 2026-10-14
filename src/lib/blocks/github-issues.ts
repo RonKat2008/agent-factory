@@ -1,4 +1,5 @@
 import { fail, ok, type BlockRunner, type Item } from "./types";
+import { getGithubDefaultRepo, getGithubToken } from "@/lib/connections";
 
 type GhIssue = { number: number; title: string; html_url: string; body?: string | null; created_at?: string; labels?: ({ name?: string } | string)[]; pull_request?: unknown };
 const BODY_CAP = 1000;
@@ -12,9 +13,9 @@ async function gh(path: string, token: string, init: RequestInit = {}): Promise<
 }
 
 export const githubIssues: BlockRunner = async (params, ctx) => {
-  const token = process.env.GITHUB_TOKEN;
-  if (!token) return fail("GITHUB_TOKEN is not set; github_issues needs a GitHub token in the environment");
-  const repo = String(params?.repo ?? "");
+  const token = await getGithubToken();
+  if (!token) return fail("GitHub is not connected; connect it on /connections (or set GITHUB_TOKEN)");
+  const repo = String(params?.repo || (await getGithubDefaultRepo()) || "");
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return fail(`github_issues: repo must be "owner/name", got "${repo}"`);
 
   if (params?.action === "label") {

@@ -11,6 +11,7 @@ const NAV = [
   { href: "/", label: "Fleet" },
   { href: "/new", label: "New agent" },
   { href: "/outbox", label: "Outbox" },
+  { href: "/connections", label: "Connections" },
 ];
 
 function Clock() {

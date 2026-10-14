@@ -1,5 +1,6 @@
 // Delivery channel: Slack incoming webhook (when configured) + the outbox table (always).
 import { outboxInsert } from "@/lib/repo";
+import { getSlackWebhook } from "@/lib/connections";
 
 const SLACK_TIMEOUT_MS = 8_000;
 
@@ -13,7 +14,7 @@ export function feedbackLine(runId: string): string {
 }
 
 async function postToSlack(text: string): Promise<{ ok: boolean; error?: string } | null> {
-  const webhook = process.env.SLACK_WEBHOOK_URL;
+  const webhook = await getSlackWebhook();
   if (!webhook) return null;
   try {
     const res = await fetch(webhook, {

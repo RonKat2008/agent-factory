@@ -106,3 +106,11 @@ create index if not exists agents_due_idx on agents (status, next_run_at);
 create index if not exists runs_agent_idx on runs (agent_id, started_at desc);
 create index if not exists events_created_idx on events (created_at desc);
 create index if not exists step_runs_run_idx on step_runs (run_id, idx);
+
+-- Connections (Slack, GitHub): encrypted credentials managed from /connections.
+create table if not exists connections (
+  provider text primary key,
+  secret_enc text not null,
+  meta jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now()
+);
