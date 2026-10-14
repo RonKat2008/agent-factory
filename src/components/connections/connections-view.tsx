@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState, type ComponentType, type FormEvent } from "react";
-import { GitBranch, Hash, KeyRound, Loader2, LockOpen, Network, Newspaper, PackageOpen, Rss, SquareTerminal } from "lucide-react";
+import Link from "next/link";
+import { ArrowUpRight, GitBranch, Hash, KeyRound, Loader2, LockOpen, Network, Newspaper, PackageOpen, Rss, SquareTerminal } from "lucide-react";
 import { toast } from "sonner";
 import { getConnections, getUnlocked, lock, unlock, type ConnectionStatus, type Provider } from "./api";
+import { CommunityConnectors } from "./community-connectors";
 import { ConnectableCard, type ConnectableDef } from "./connectable-card";
 import { BTN_PRIMARY, BTN_SECONDARY, ConnPill, INPUT, LABEL } from "./parts";
 
@@ -89,6 +91,9 @@ export function ConnectionsView() {
           <p className="mt-1 max-w-[60ch] text-[14px] text-stone-600">
             What your agents can reach. Credentials are encrypted at rest and used only by agents at run time; they never come back to the browser.
           </p>
+          <Link href="/connections/build" className="mt-2 inline-flex items-center gap-1 text-[13px] text-stone-700 underline decoration-stone-300 underline-offset-2 hover:text-stone-900 hover:decoration-stone-900">
+            Build a connector: HTTP, MCP or a first-class block <ArrowUpRight className="size-3.5" aria-hidden />
+          </Link>
         </div>
         <div className="flex flex-wrap items-end gap-4 sm:gap-6">
           <div className="text-right">
@@ -116,6 +121,8 @@ export function ConnectionsView() {
           )}
         </div>
       </section>
+
+      <CommunityConnectors />
 
       <section aria-labelledby="builtin-heading" className="flex flex-col gap-3">
         <h2 id="builtin-heading" className={LABEL}>Built in · no setup</h2>

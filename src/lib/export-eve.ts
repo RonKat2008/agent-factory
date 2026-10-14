@@ -180,6 +180,8 @@ function describe(step: Step): string {
       return `Use the send_slack tool to post: ${tpl(step.params.message)}${step.params.skipIfEmpty ? " Skip posting if there is nothing to report." : ""} (step "${step.id}")`;
     case "require_approval":
       return `Ask for human approval before continuing${step.params.message ? `: ${tpl(step.params.message)}` : ""}. (step "${step.id}")`;
+    case "connector":
+      return `Call the "${step.params.action}" action of the custom connector "${step.params.connector}"${step.params.args.length ? ` with ${step.params.args.map((a) => `${a.name}=${tpl(a.value)}`).join(", ")}` : ""}. (step "${step.id}")`;
     case "run_code":
       return `Yourself (no tool): apply this JavaScript logic mentally to ${tpl(step.params.input)} and use its result:\n   ${step.params.code.split("\n").join("\n   ")}\n   (step "${step.id}")`;
   }

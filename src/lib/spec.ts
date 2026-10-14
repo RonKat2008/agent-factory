@@ -83,6 +83,20 @@ const RunCode = z.object({
   }),
 });
 
+// A user-added custom connector (HTTP API or MCP server) from /connections.
+const Connector = z.object({
+  id: z.string(),
+  block: z.literal("connector"),
+  params: z.object({
+    connector: z.string().describe("Connector slug from the custom connectors catalog"),
+    action: z.string().describe("Action (or MCP tool) name on that connector"),
+    // An array (not a record): record schemas come back empty from the gateway's structured output.
+    args: z
+      .array(z.object({ name: z.string(), value: tpl }))
+      .describe("One entry per argument: name = the action's param name, value = literal text or a template"),
+  }),
+});
+
 export const StepSchema = z.discriminatedUnion("block", [
   FetchUrl,
   FetchRss,
@@ -94,6 +108,7 @@ export const StepSchema = z.discriminatedUnion("block", [
   SendSlack,
   RequireApproval,
   RunCode,
+  Connector,
 ]);
 export type Step = z.infer<typeof StepSchema>;
 export type BlockName = Step["block"];

@@ -114,3 +114,18 @@ create table if not exists connections (
   meta jsonb not null default '{}'::jsonb,
   updated_at timestamptz not null default now()
 );
+
+-- Custom connectors: HTTP API or remote MCP server, addable by anyone from /connections.
+-- secret_enc is AES-GCM (src/lib/crypto.ts); it is never returned by any route.
+create table if not exists custom_connectors (
+  id uuid primary key default gen_random_uuid(),
+  slug text unique not null,
+  kind text not null,                 -- http | mcp
+  name text not null,
+  base_url text not null,
+  auth_header text,
+  secret_enc text,
+  actions jsonb not null default '[]'::jsonb,
+  created_at timestamptz not null default now(),
+  created_by_ip text
+);

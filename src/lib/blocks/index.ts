@@ -1,4 +1,5 @@
 import type { BlockName, BlockResult, Step } from "@/lib/spec";
+import { connector } from "./connector";
 import { diffWithMemory } from "./diff-with-memory";
 import { fetchRss } from "./fetch-rss";
 import { fetchUrl } from "./fetch-url";
@@ -76,6 +77,13 @@ export const BLOCKS: Record<BlockName, BlockDef> = {
     params: "{ code: string (function body, uses `input`, must return a value), input: template resolving to the data passed as `input` }",
     outputs: "{ result, items? (only when result is an array), ms, engine: 'vercel-sandbox'|'local-demo', sandboxId }",
   },
+  connector: {
+    run: connector,
+    description:
+      "Call an action on a user-added custom connector (an HTTP API or a remote MCP server). Use ONLY connector slugs and action names listed under 'Custom connectors' below; if none fit, don't use this block.",
+    params: "{ connector: slug, action: action name, args: [{ name, value }] (one per action param; value is literal text or a template) }",
+    outputs: "{ status, data (parsed JSON or text), text (<=8k chars), items? (when the response is a list of {title,url}-like objects) }",
+  },
 };
 
 const EXAMPLES: Record<BlockName, string> = {
@@ -90,6 +98,8 @@ const EXAMPLES: Record<BlockName, string> = {
   run_code:
     '{"id":"top","block":"run_code","params":{"code":"return input.filter(i => i.points > 0).sort((a, b) => b.points - a.points).slice(0, 3);","input":"{{steps.hn.items}}"}}  -> {{steps.top.items}}, {{steps.top.result}}',
   require_approval: '{"id":"approve","block":"require_approval","params":{"message":"Post this digest?"}}',
+  connector:
+    '{"id":"wx","block":"connector","params":{"connector":"example_weather","action":"forecast","args":[{"name":"latitude","value":"37.77"},{"name":"longitude","value":"-122.42"}]}}  -> {{steps.wx.text}}, {{steps.wx.data}}  (example_weather is illustrative; use a real slug from the catalog)',
 };
 
 /** Compact prompt-ready catalog for the builder LLM. */

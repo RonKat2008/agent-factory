@@ -3,6 +3,7 @@ import { generateText, Output } from "ai";
 import { z } from "zod";
 import { callCostUsd, isDemoMode, smartModel } from "@/lib/ai";
 import { blockCatalog } from "@/lib/blocks";
+import { connectorCatalog } from "@/lib/connectors";
 import { cannedBuildSpec, cannedEditResult, cannedReviseResult } from "@/lib/demo";
 import { AgentSpecSchema, type AgentSpec } from "@/lib/spec";
 
@@ -109,9 +110,10 @@ function systemPrompt(): string {
 }
 
 async function structured<T extends z.ZodType>(schema: T, prompt: string): Promise<{ output: z.infer<T>; costUsd: number }> {
+  const connectors = await connectorCatalog();
   const result = await generateText({
     model: smartModel(),
-    system: systemPrompt(),
+    system: connectors ? `${systemPrompt()}\n\n${connectors}` : systemPrompt(),
     prompt,
     output: Output.object({ schema }),
     abortSignal: AbortSignal.timeout(GENERATE_TIMEOUT_MS),
