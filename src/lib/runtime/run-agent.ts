@@ -13,13 +13,14 @@ import {
   memorySet,
   updateAgent,
 } from "@/lib/repo";
+import { listDownstream, MAX_CHAIN_DEPTH, sampleTriggerContext } from "@/lib/repo-triggers";
 import type { AgentSpec, RunOutput, Step } from "@/lib/spec";
 import type { RunKind, RunStatus } from "@/lib/types";
 import { deliver } from "./deliver";
 import { deriveRunOutput, isBulletLine, type StepResultLite } from "./output";
 import { triggerRepair } from "./repair-hook";
 import { nextRunAt } from "./schedule";
-import { resolveParams } from "./template";
+import { resolveParams, type TriggerContext } from "./template";
 import { runTests, type TestResult } from "./tests";
 
 export type TestResultRow = TestResult;
@@ -51,7 +52,12 @@ export type ExecInput = {
   kind: RunKind;
   runId: string;
   requiresApproval: boolean;
+  /** Upstream post that fired this run (triggered runs) or a sample of it (other runs of a chained agent). */
+  trigger?: TriggerContext;
 };
+
+export type { TriggerContext };
+export type LiveKind = "scheduled" | "manual" | "triggered";
 
 export const isDryKind = (kind: RunKind) => kind === "dry_run" || kind === "repair_test";
 
@@ -71,14 +77,14 @@ function makeContext(agentId: string, runId: string, dryRun: boolean): BlockCont
   };
 }
 
-const TEMPLATE_REF_RE = /\{\{\s*steps\.[^}\s]+\s*\}\}/g;
+const TEMPLATE_REF_RE = /\{\{\s*(?:steps|trigger)\.[^}\s]+\s*\}\}/g;
 
 /** True when the text has templates and every one resolves to empty content. */
-function templatesAllEmpty(text: string, outputs: Record<string, unknown>): boolean {
+function templatesAllEmpty(text: string, outputs: Record<string, unknown>, trigger?: TriggerContext): boolean {
   const refs = text.match(TEMPLATE_REF_RE) ?? [];
   if (refs.length === 0) return false;
   return refs.every((ref) => {
-    const v = resolveParams(ref, outputs).value;
+    const v = resolveParams(ref, outputs, trigger).value;
     if (v == null) return true;
     if (typeof v === "string") return v.trim() === "";
     if (Array.isArray(v)) return v.length === 0;
@@ -95,14 +101,15 @@ export async function executeStepAt(a: {
   outputs: Record<string, unknown>; // step id -> output of earlier ok steps
   dryRun: boolean;
   holdSend: boolean; // live run: run send_slack in dry mode; finalizeExec delivers after tests pass
+  trigger?: TriggerContext; // resolves {{trigger.*}}
 }): Promise<StepOutcome> {
   const { step } = a;
   const started = Date.now();
-  const r0 = resolveParams(step.params, a.outputs);
+  const r0 = resolveParams(step.params, a.outputs, a.trigger);
   const { missing } = r0;
   let resolved = r0.value;
   // "*Header*\n{{steps.x.markdown}}" with an empty x is still empty content: let skipIfEmpty skip it.
-  if (step.block === "send_slack" && step.params.skipIfEmpty && missing.length === 0 && templatesAllEmpty(step.params.message, a.outputs)) {
+  if (step.block === "send_slack" && step.params.skipIfEmpty && missing.length === 0 && templatesAllEmpty(step.params.message, a.outputs, a.trigger)) {
     resolved = { ...(resolved as Record<string, unknown>), message: "" };
   }
   let outcome: StepOutcome;
@@ -235,7 +242,7 @@ export async function executeSpec(input: ExecInput): Promise<ExecResult> {
   try {
     for (let i = 0; i < spec.steps.length; i++) {
       const step = spec.steps[i];
-      const o = await executeStepAt({ agentId, runId, idx: i, step, outputs, dryRun, holdSend });
+      const o = await executeStepAt({ agentId, runId, idx: i, step, outputs, dryRun, holdSend, trigger: input.trigger });
       outcomes[step.id] = o;
       if (!o.ok) {
         stepError = { stepId: step.id, block: step.block, error: o.error ?? "unknown error", input: o.resolvedParams ?? null };
@@ -275,13 +282,30 @@ export async function dryRun(agentId: string, spec: AgentSpec, kind: "dry_run" |
   const agent = await getAgent(agentId);
   const version = agent?.currentVersion ?? 0;
   const runId = await createRun({ agentId, version, kind });
-  return executeSpec({ agentId, version, spec, kind, runId, requiresApproval: false });
+  // A chained agent's dry run uses the upstream's last post, so its tests check a realistic input.
+  const trigger = await resolveRunTrigger(spec);
+  return executeSpec({ agentId, version, spec, kind, runId, requiresApproval: false, trigger });
+}
+
+/**
+ * The trigger context a run sees: the real one for triggered runs; for any other run of a chained agent
+ * (dry/manual/scheduled/repair) a sample built from the upstream's latest post. Undefined when unchained.
+ */
+export async function resolveRunTrigger(spec: AgentSpec, given?: TriggerContext): Promise<TriggerContext | undefined> {
+  if (given) return given;
+  if (!spec.trigger) return undefined;
+  try {
+    return await sampleTriggerContext(spec.trigger.agentId);
+  } catch (e) {
+    console.error("[runtime] sample trigger context failed:", (e as Error).message);
+    return undefined;
+  }
 }
 
 export type PreparedRun = { runId: string; version: number; spec: AgentSpec; requiresApproval: boolean };
 
 /** Loads the active version and creates the run row (so callers can return runId immediately). */
-export async function prepareRun(agentId: string, kind: "scheduled" | "manual"): Promise<PreparedRun | null> {
+export async function prepareRun(agentId: string, kind: LiveKind): Promise<PreparedRun | null> {
   const [agent, active] = await Promise.all([getAgent(agentId), getActiveVersion(agentId)]);
   if (!agent || !active) return null;
   const runId = await createRun({ agentId, version: active.version, kind });
@@ -298,7 +322,7 @@ export async function loadRun(agentId: string): Promise<Omit<PreparedRun, "runId
 }
 
 /** Agent-level consequences of a live (scheduled/manual) run: events, next_run_at, broken + repair. */
-export async function afterLiveRun(agentId: string, result: ExecResult): Promise<void> {
+export async function afterLiveRun(agentId: string, result: ExecResult, trigger?: TriggerContext): Promise<void> {
   const agent = await getAgent(agentId);
   if (!agent) return;
   if (result.status === "failed" && isJudgeOnlyFailure(result)) {
@@ -331,13 +355,66 @@ export async function afterLiveRun(agentId: string, result: ExecResult): Promise
     await logEvent(agentId, "run_succeeded", msg, { runId: result.runId, costUsd: result.costUsd });
   }
   if (agent.status === "live") await updateAgent(agentId, { nextRunAt: nextRunAt(agent.schedule) });
+  if (result.output.posted) await fireTriggers(agentId, agent.name, result.runId, result.output, trigger);
+}
+
+/**
+ * Chains: after `upstreamId` actually delivered a post, start a "triggered" run of every agent whose
+ * active spec has trigger.agentId === upstreamId. Guards: no self-trigger, depth <= MAX_CHAIN_DEPTH,
+ * only live downstreams (others get a chain_skipped event). Never throws.
+ */
+export async function fireTriggers(
+  upstreamId: string,
+  upstreamName: string,
+  upstreamRunId: string,
+  output: RunOutput,
+  parent?: TriggerContext,
+): Promise<void> {
+  if (!output.posted) return;
+  try {
+    const downstream = await listDownstream(upstreamId);
+    if (downstream.length === 0) return;
+    const depth = (parent && !parent.sample ? parent.depth : 0) + 1;
+    const { startAgentRun } = await import("./start-run");
+    for (const d of downstream) {
+      const data = { fromAgentId: upstreamId, fromRunId: upstreamRunId, toAgentId: d.id, depth };
+      if (d.id === upstreamId) {
+        await logEvent(d.id, "chain_skipped", "Didn't trigger itself (loop guard)", data);
+        continue;
+      }
+      if (depth > MAX_CHAIN_DEPTH) {
+        await logEvent(d.id, "chain_skipped", `Chain stopped: ${upstreamName} is ${depth - 1} hops deep (limit ${MAX_CHAIN_DEPTH})`, data);
+        continue;
+      }
+      if (d.status !== "live") {
+        await logEvent(d.id, "chain_skipped", `Not triggered by ${upstreamName}: agent is ${d.status.replace("_", " ")}`, data);
+        continue;
+      }
+      const ctx: TriggerContext = {
+        agentId: upstreamId,
+        agentName: upstreamName,
+        runId: upstreamRunId,
+        message: output.message,
+        citations: output.citations,
+        depth,
+      };
+      try {
+        const runId = await startAgentRun(d.id, "triggered", ctx);
+        await logEvent(d.id, "triggered", `Triggered by ${upstreamName}`, { ...data, runId });
+      } catch (e) {
+        await logEvent(d.id, "chain_skipped", `Could not start the chained run: ${(e as Error).message}`.slice(0, 300), data);
+      }
+    }
+  } catch (e) {
+    console.error("[runtime] fireTriggers failed for", upstreamId, (e as Error).message);
+  }
 }
 
 /**
  * Non-durable full run (load, execute, consequences). The routes use the durable workflow instead
  * (src/lib/runtime/start-run.ts); this is the same logic in one call, handy for scripts/fallback.
  */
-export async function runAgent(agentId: string, kind: "scheduled" | "manual", runId?: string): Promise<ExecResult | null> {
+export async function runAgent(agentId: string, kind: LiveKind, runId?: string, given?: TriggerContext): Promise<ExecResult | null> {
   let prepared: PreparedRun | null;
   if (runId) {
     const loaded = await loadRun(agentId);
@@ -346,7 +423,8 @@ export async function runAgent(agentId: string, kind: "scheduled" | "manual", ru
     prepared = await prepareRun(agentId, kind);
   }
   if (!prepared) return null;
-  const result = await executeSpec({ agentId, kind, ...prepared });
-  await afterLiveRun(agentId, result);
+  const trigger = await resolveRunTrigger(prepared.spec, given);
+  const result = await executeSpec({ agentId, kind, ...prepared, trigger });
+  await afterLiveRun(agentId, result, trigger);
   return result;
 }

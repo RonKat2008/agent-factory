@@ -6,11 +6,13 @@ import {
   FlaskConical,
   Hammer,
   Hand,
+  Link2,
   Loader2,
   Pencil,
   Rocket,
   ShieldCheck,
   ThumbsUp,
+  Unlink,
   Wrench,
   XCircle,
   Zap,
@@ -53,6 +55,8 @@ export const EVENT_STYLES: Record<EventType, EventStyle> = {
   dry_run: { icon: FlaskConical, ...STONE },
   edited: { icon: Pencil, ...STONE },
   proposed: { icon: Pencil, ...VIOLET },
+  triggered: { icon: Link2, color: "text-sky-600", tone: "border-sky-600 text-sky-800" },
+  chain_skipped: { icon: Unlink, ...STONE, color: "text-stone-500" },
 };
 
 export function eventStyle(type: EventType): EventStyle {

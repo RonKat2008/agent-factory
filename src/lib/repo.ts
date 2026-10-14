@@ -24,7 +24,7 @@ type VersionStatus = "active" | "proposed" | "rejected";
 
 const MAX_JSON_BYTES = 50_000;
 const PREVIEW_CHARS = 2_000;
-const NON_DRY = "('scheduled','manual')";
+const NON_DRY = "('scheduled','manual','triggered')";
 
 // ---------- helpers ----------
 
@@ -150,12 +150,12 @@ async function loadAgentActivity(): Promise<{
              (extract(epoch from (finished_at - started_at)) * 1000)::int as ms
       from (
         select r.*, row_number() over (partition by agent_id order by started_at desc) rn
-        from runs r where kind in ('scheduled','manual','repair_test')
+        from runs r where kind in ('scheduled','manual','triggered','repair_test')
       ) t where rn <= 20 order by agent_id, started_at asc`),
     query<Row>(`
       select distinct on (agent_id) agent_id, output ->> 'message' as message, started_at
       from runs
-      where status = 'succeeded' and kind in ('scheduled','manual') and output ->> 'posted' = 'true'
+      where status = 'succeeded' and kind in ${NON_DRY} and output ->> 'posted' = 'true'
       order by agent_id, started_at desc`),
   ]);
   const recent = new Map<string, RecentRun[]>();

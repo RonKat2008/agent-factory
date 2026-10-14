@@ -7,6 +7,7 @@ export const SEED_NAMES = {
   brief: "Daily AI agents brief",
   watcher: "Competitor watcher: Acme",
   next: "Next.js release assistant",
+  deepDive: "Competitor deep-dive",
 } as const;
 
 function appUrl(): string {
@@ -124,4 +125,73 @@ export function seedAgents(): SeedAgent[] {
     },
   ];
   return raw.map((a) => ({ ...a, spec: AgentSpecSchema.parse(a.spec) }));
+}
+
+/** Web research source for the chained deep-dive: the Exa connector when it exists, else Hacker News. */
+export type ChainResearch = { kind: "exa"; connector: string; action: string } | { kind: "hn" };
+
+/**
+ * The chained demo agent: runs whenever the Competitor watcher posts, researches each Acme change on the
+ * web and posts a cited competitive analysis. Not part of seedAgents(): it needs the watcher's id.
+ */
+export function chainSeedAgent(watcherId: string, research: ChainResearch): SeedAgent {
+  const exa = research.kind === "exa";
+  const researchStep = exa
+    ? { id: "research", block: "connector" as const, params: { connector: research.connector, action: research.action, args: [{ name: "query", value: "{{steps.q.text}}" }] } }
+    : { id: "research", block: "hn_search" as const, params: { query: "{{steps.q.text}}", sinceHours: 8760, limit: 8 } };
+  const spec: AgentSpec = {
+    name: SEED_NAMES.deepDive,
+    schedule: "0 16 * * 1",
+    requiresApproval: false,
+    trigger: { agentId: watcherId, when: "posted" },
+    steps: [
+      {
+        id: "q",
+        block: "llm",
+        params: {
+          instruction: exa
+            ? "Write ONE web search query (4-8 words, no quotes) to research how competitors handle the product changes below (the product category and comparable features). Reply with the query only."
+            : "Write ONE Hacker News search query of 2-3 words naming the product category of the changes below (e.g. 'anomaly detection'). Reply with the query only.",
+          input: "{{trigger.message}}",
+          format: "text",
+        },
+      },
+      researchStep,
+      {
+        id: "analysis",
+        block: "llm",
+        params: {
+          instruction:
+            "For each Acme change in the watcher's post: what it is, how it compares to the market, and one implication for us — cite sources. One bullet per change (at most 4), under 45 words each. Cite a research URL when it supports the comparison, otherwise the Acme changelog URL from the post.",
+          input: `Watcher post from {{trigger.agentName}}:\n{{trigger.message}}\n\nWeb research:\n${exa ? "{{steps.research.text}}" : "{{steps.research.items}}"}`,
+          format: "cited_bullets",
+        },
+      },
+      { id: "send", block: "send_slack", params: { message: "*Competitor deep-dive: Acme*\n{{steps.analysis.markdown}}", skipIfEmpty: true } },
+    ],
+    tests: [
+      { kind: "nonempty", addedBy: "build" },
+      { kind: "has_citations", addedBy: "build" },
+      { kind: "max_items", config: { max: 4 }, addedBy: "build" },
+      {
+        kind: "llm_judge",
+        config: {
+          rubric:
+            "Every bullet is about an Acme product change, says how it compares to the market or competitors, and states one implication for us; every bullet ends with a source link.",
+        },
+        addedBy: "build",
+      },
+    ],
+    plan: {
+      runs: `Whenever ${SEED_NAMES.watcher} posts`,
+      checks: exa ? "The watcher's post plus web research (Exa search)" : "The watcher's post plus related Hacker News coverage",
+      does: "Researches each Acme change and posts what it is, how it compares to the market, and one implication for us, with sources",
+      sendsTo: "Slack",
+      asksBefore: "Nothing",
+    },
+  };
+  return {
+    request: `When the ${SEED_NAMES.watcher} posts something new, research each change on the web and post a cited competitive analysis: what it is, how it compares to the market, and one implication for us.`,
+    spec: AgentSpecSchema.parse(spec),
+  };
 }

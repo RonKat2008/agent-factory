@@ -39,7 +39,7 @@ export async function buildAgentWorkflow(input: BuildAgentInput) {
 
 async function generateStep(agentId: string, request: string): Promise<{ spec: AgentSpec; version: number; costUsd: number }> {
   "use step";
-  const { spec, costUsd } = await generateSpec(request);
+  const { spec, costUsd } = await generateSpec(request, agentId);
   const version = await insertVersion({ agentId, spec, reason: "initial build", createdBy: "user", parentVersion: null });
   await updateAgent(agentId, {
     name: spec.name,
@@ -74,7 +74,7 @@ async function failedStep(agentId: string, out: DryOutcome): Promise<void> {
 
 async function reviseStep(agentId: string, spec: AgentSpec, parent: number, out: DryOutcome): Promise<{ spec: AgentSpec; version: number; costUsd: number }> {
   "use step";
-  const fixed = await reviseSpec(spec, out.failures, out.stepSummaries);
+  const fixed = await reviseSpec(spec, out.failures, out.stepSummaries, agentId);
   const version = await insertVersion({
     agentId,
     spec: fixed.spec,

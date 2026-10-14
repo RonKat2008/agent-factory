@@ -1,15 +1,15 @@
 // Durable agent run: one workflow step per block, each persisting its own step_run row,
 // so a crash mid-run is visible in the run timeline. Started via src/lib/runtime/start-run.ts.
 import type { AgentSpec, Step } from "@/lib/spec";
-import type { ExecResult, StepError, StepOutcome } from "@/lib/runtime/run-agent";
+import type { ExecResult, LiveKind, StepError, StepOutcome, TriggerContext } from "@/lib/runtime/run-agent";
 
-export type RunAgentWorkflowInput = { agentId: string; kind: "scheduled" | "manual"; runId: string };
+export type RunAgentWorkflowInput = { agentId: string; kind: LiveKind; runId: string; trigger?: TriggerContext };
 
 export async function runAgentWorkflow(input: RunAgentWorkflowInput) {
   "use workflow";
   const { agentId, kind, runId } = input;
   try {
-    const ctx = await loadStep(agentId, runId);
+    const ctx = await loadStep(agentId, runId, input.trigger);
     if (!ctx) return { runId, status: "failed" as const };
     const holdSend = true; // test-gated delivery: send_slack runs dry, finalizeStep delivers if tests pass
     const outputs: Record<string, unknown> = {};
@@ -17,7 +17,7 @@ export async function runAgentWorkflow(input: RunAgentWorkflowInput) {
     let stepError: StepError | null = null;
     for (let i = 0; i < ctx.spec.steps.length; i++) {
       const step = ctx.spec.steps[i];
-      const o = await blockStep(agentId, runId, i, step, outputs, holdSend);
+      const o = await blockStep(agentId, runId, i, step, outputs, holdSend, ctx.trigger);
       outcomes[step.id] = o;
       if (!o.ok) {
         stepError = { stepId: step.id, block: step.block, error: o.error ?? "unknown error", input: o.resolvedParams ?? null };
@@ -26,7 +26,7 @@ export async function runAgentWorkflow(input: RunAgentWorkflowInput) {
       }
       outputs[step.id] = o.output;
     }
-    const result = await finalizeStep(agentId, runId, ctx.spec, outcomes, stepError, ctx.requiresApproval);
+    const result = await finalizeStep(agentId, runId, ctx.spec, outcomes, stepError, ctx.requiresApproval, ctx.trigger);
     return { runId, status: result.status, kind };
   } catch (e) {
     await failStep(agentId, runId, e instanceof Error ? e.message : String(e));
@@ -34,15 +34,20 @@ export async function runAgentWorkflow(input: RunAgentWorkflowInput) {
   }
 }
 
-async function loadStep(agentId: string, runId: string): Promise<{ spec: AgentSpec; requiresApproval: boolean } | null> {
+async function loadStep(
+  agentId: string,
+  runId: string,
+  given?: TriggerContext,
+): Promise<{ spec: AgentSpec; requiresApproval: boolean; trigger?: TriggerContext } | null> {
   "use step";
-  const { loadRun, failRun } = await import("@/lib/runtime/run-agent");
+  const { loadRun, failRun, resolveRunTrigger } = await import("@/lib/runtime/run-agent");
   const loaded = await loadRun(agentId);
   if (!loaded) {
     await failRun(runId, "agent or active version not found");
     return null;
   }
-  return { spec: loaded.spec, requiresApproval: loaded.requiresApproval };
+  const trigger = await resolveRunTrigger(loaded.spec, given);
+  return { spec: loaded.spec, requiresApproval: loaded.requiresApproval, ...(trigger ? { trigger } : {}) };
 }
 
 async function blockStep(
@@ -52,10 +57,11 @@ async function blockStep(
   step: Step,
   outputs: Record<string, unknown>,
   holdSend: boolean,
+  trigger?: TriggerContext,
 ): Promise<StepOutcome> {
   "use step";
   const { executeStepAt } = await import("@/lib/runtime/run-agent");
-  return executeStepAt({ agentId, runId, idx, step, outputs, dryRun: false, holdSend });
+  return executeStepAt({ agentId, runId, idx, step, outputs, dryRun: false, holdSend, trigger });
 }
 
 async function skipStep(runId: string, steps: Step[], fromIdx: number): Promise<void> {
@@ -71,11 +77,12 @@ async function finalizeStep(
   outcomes: Record<string, StepOutcome>,
   stepError: StepError | null,
   requiresApproval: boolean,
+  trigger?: TriggerContext,
 ): Promise<ExecResult> {
   "use step";
   const { finalizeExec, afterLiveRun } = await import("@/lib/runtime/run-agent");
   const result = await finalizeExec({ agentId, runId, spec, outcomes, stepError, requiresApproval });
-  await afterLiveRun(agentId, result);
+  await afterLiveRun(agentId, result, trigger);
   return result;
 }
 

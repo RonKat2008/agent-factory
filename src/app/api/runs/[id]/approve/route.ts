@@ -1,7 +1,8 @@
 import { z } from "zod";
 import { UUID_RE, guard, json, jsonError } from "@/lib/api-util";
-import { finishRun, getRun, logEvent } from "@/lib/repo";
+import { finishRun, getAgent, getRun, logEvent } from "@/lib/repo";
 import { deliver } from "@/lib/runtime/deliver";
+import { fireTriggers } from "@/lib/runtime/run-agent";
 
 export const dynamic = "force-dynamic";
 
@@ -20,6 +21,8 @@ export function POST(req: Request, ctx: { params: Promise<{ id: string }> }): Pr
       await deliver({ agentId: run.agentId, runId: id, message: run.output.message });
       await finishRun(id, { status: "succeeded", output: { ...run.output, posted: true }, error: run.error });
       await logEvent(run.agentId, "run_succeeded", "Approved and posted", { runId: id });
+      const agent = await getAgent(run.agentId);
+      await fireTriggers(run.agentId, agent?.name ?? "upstream agent", id, { ...run.output, posted: true });
     } else {
       await finishRun(id, { status: "rejected", output: run.output, error: run.error });
       await logEvent(run.agentId, "run_failed", "Post rejected by human", { runId: id });

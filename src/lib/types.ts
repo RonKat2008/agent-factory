@@ -54,7 +54,9 @@ export type EventType =
   | "paused"
   | "resumed"
   | "approval_needed"
-  | "feedback";
+  | "feedback"
+  | "triggered" // a chain fired: "Triggered by <upstream agent>"
+  | "chain_skipped"; // a chain did not fire (loop guard, depth cap, downstream paused/broken)
 
 export type FeedEvent = {
   id: string;
@@ -91,7 +93,7 @@ export type TestResult = {
   detail: string | null;
 };
 
-export type RunKind = "scheduled" | "manual" | "dry_run" | "repair_test";
+export type RunKind = "scheduled" | "manual" | "triggered" | "dry_run" | "repair_test";
 export type RunStatus = "running" | "succeeded" | "failed" | "awaiting_approval" | "rejected";
 
 export type Run = {

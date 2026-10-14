@@ -22,7 +22,7 @@ export function POST(req: Request, ctx: { params: Promise<{ id: string }> }): Pr
     const { instruction } = parsed.data;
     const limited = await rateLimit("edit", { key: clientIp(req), perKey: { max: 10, windowSec: 600 }, global: { max: 40, windowSec: 3600 } });
     if (limited) return limited;
-    const edited = await editSpec(active.spec, instruction);
+    const edited = await editSpec(active.spec, instruction, id);
     const version = await insertVersion({
       agentId: id,
       spec: edited.spec,

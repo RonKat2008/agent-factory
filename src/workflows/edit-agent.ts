@@ -68,7 +68,7 @@ async function failedStep(agentId: string, out: DryOutcome): Promise<void> {
 
 async function reviseStep(agentId: string, spec: AgentSpec, parent: number, out: DryOutcome): Promise<{ spec: AgentSpec; version: number; changeSummary: string; costUsd: number }> {
   "use step";
-  const fixed = await reviseSpec(spec, out.failures, out.stepSummaries);
+  const fixed = await reviseSpec(spec, out.failures, out.stepSummaries, agentId);
   const version = await insertVersion({
     agentId,
     spec: fixed.spec,

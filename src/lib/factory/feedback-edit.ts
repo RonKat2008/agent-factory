@@ -8,7 +8,7 @@ export async function proposeFromFeedback(agentId: string, comment: string): Pro
   try {
     const active = await getActiveVersion(agentId);
     if (!active) return null;
-    const edited = await editSpec(active.spec, `User feedback on the last post: ${comment}`);
+    const edited = await editSpec(active.spec, `User feedback on the last post: ${comment}`, agentId);
     const version = await insertVersion({
       agentId,
       spec: edited.spec,

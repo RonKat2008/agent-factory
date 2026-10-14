@@ -1,8 +1,21 @@
 // Shared demo actions used by the key-gated /api/demo/* routes and the public tour route.
 import { extraEntries, resetAcmeState, setAcmeState, getAcmeState } from "@/lib/demo-acme";
-import { deleteVersionsAbove, getActiveVersion, getAgentDetail, listAgents, memoryClear, setVersionStatus, updateAgent } from "@/lib/repo";
+import {
+  createAgent,
+  deleteVersionsAbove,
+  getActiveVersion,
+  getAgentDetail,
+  insertVersion,
+  listAgents,
+  logEvent,
+  memoryClear,
+  setVersionStatus,
+  updateAgent,
+} from "@/lib/repo";
+import { getCustomConnector } from "@/lib/repo-connectors";
 import { baselineMemory } from "@/lib/runtime/run-agent";
-import { SEED_NAMES } from "@/lib/seed-specs";
+import { nextRunAt } from "@/lib/runtime/schedule";
+import { chainSeedAgent, SEED_NAMES, type ChainResearch } from "@/lib/seed-specs";
 import type { Agent } from "@/lib/types";
 
 const RESET_DELAY_MS = 15 * 60 * 1000;
@@ -42,4 +55,43 @@ export async function resetDemo() {
   const v1 = await getActiveVersion(watcher.id);
   const baseline = v1 ? await baselineMemory(watcher.id, v1.spec) : { ok: false, error: "no v1" };
   return { ok: true, watcherId: watcher.id, baseline };
+}
+
+const EXA_SLUG = "exa_search";
+const EXA_ACTION = "web_search_exa";
+
+async function chainResearch(): Promise<ChainResearch> {
+  try {
+    const exa = await getCustomConnector(EXA_SLUG);
+    const action = exa?.actions.find((a) => a.name === EXA_ACTION);
+    if (action && action.params.some((p) => p.name === "query")) return { kind: "exa", connector: EXA_SLUG, action: EXA_ACTION };
+  } catch (e) {
+    console.error("[demo] exa lookup failed:", (e as Error).message);
+  }
+  return { kind: "hn" };
+}
+
+/**
+ * Idempotent: adds the chained "Competitor deep-dive" (triggered by the Competitor watcher), live, v1.
+ * No first run: it fires the next time the watcher posts.
+ */
+export async function seedChainAgent(): Promise<
+  { ok: true; created: boolean; agentId: string; watcherId: string; research: ChainResearch["kind"] } | { ok: false; error: string }
+> {
+  const agents = await listAgents();
+  const watcher = agents.find((a) => a.name === SEED_NAMES.watcher);
+  if (!watcher) return { ok: false, error: `"${SEED_NAMES.watcher}" not found — seed the demo first` };
+  const existing = agents.find((a) => a.name === SEED_NAMES.deepDive);
+  if (existing) {
+    const active = await getActiveVersion(existing.id);
+    const research = active?.spec.steps.some((s) => s.block === "connector") ? "exa" : "hn";
+    return { ok: true, created: false, agentId: existing.id, watcherId: watcher.id, research };
+  }
+  const research = await chainResearch();
+  const { request, spec } = chainSeedAgent(watcher.id, research);
+  const agentId = await createAgent({ name: spec.name, request, schedule: spec.schedule, status: "building", requiresApproval: spec.requiresApproval });
+  const version = await insertVersion({ agentId, spec, reason: "initial build", createdBy: "user", parentVersion: null });
+  await updateAgent(agentId, { currentVersion: version, status: "live", nextRunAt: nextRunAt(spec.schedule) });
+  await logEvent(agentId, "went_live", `Went live (seeded) — runs whenever ${watcher.name} posts`);
+  return { ok: true, created: true, agentId, watcherId: watcher.id, research: research.kind };
 }

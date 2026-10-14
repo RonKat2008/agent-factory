@@ -1,5 +1,6 @@
 import { guard, json, jsonError } from "@/lib/api-util";
 import { isAdmin } from "@/lib/demo-acme";
+import { seedChainAgent } from "@/lib/demo-actions";
 import { createAgent, insertVersion, listAgents, logEvent, updateAgent } from "@/lib/repo";
 import { baselineMemory } from "@/lib/runtime/run-agent";
 import { nextRunAt } from "@/lib/runtime/schedule";
@@ -31,6 +32,8 @@ export function POST(request: Request): Promise<Response> {
       const runId = await startAgentRun(agentId, "manual");
       created.push({ agentId, name: spec.name, runId });
     }
-    return json({ ok: true, created, skipped });
+    // The chained deep-dive needs the watcher's id, so it is seeded after the base agents (no first run).
+    const chain = await seedChainAgent();
+    return json({ ok: true, created, skipped, chain });
   });
 }
