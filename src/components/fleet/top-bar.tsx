@@ -4,11 +4,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { getAgents, getStats } from "@/lib/api-client";
+import { AskOps } from "@/components/ops/ask-ops";
 import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/tour", label: "Tour", highlight: true },
-  { href: "/", label: "Fleet" },
+  { href: "/fleet", label: "Fleet" },
   { href: "/graph", label: "Graph" },
   { href: "/new", label: "New agent" },
   { href: "/outbox", label: "Outbox" },
@@ -112,6 +113,7 @@ export function TopBar() {
             );
           })}
         </nav>
+        <AskOps />
         <div className="ml-auto hidden shrink-0 items-center gap-3 font-mono text-[11px] text-stone-500 sm:flex">
           <span className="inline-flex items-center gap-1.5 text-stone-700" title="Agents currently live">
             <span className="text-emerald-600">●</span>
