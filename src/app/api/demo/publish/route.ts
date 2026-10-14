@@ -1,5 +1,6 @@
 import { guard, json, jsonError } from "@/lib/api-util";
-import { extraEntries, getAcmeState, isAdmin, setAcmeState } from "@/lib/demo-acme";
+import { isAdmin } from "@/lib/demo-acme";
+import { publishAcme } from "@/lib/demo-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -7,9 +8,6 @@ export const dynamic = "force-dynamic";
 export function POST(request: Request): Promise<Response> {
   return guard("POST /api/demo/publish", async () => {
     if (!isAdmin(request)) return jsonError("unauthorized", 401);
-    const state = await getAcmeState();
-    const published = Math.min(state.published + 1, extraEntries.length);
-    await setAcmeState({ published });
-    return json({ ok: true, published });
+    return json(await publishAcme());
   });
 }

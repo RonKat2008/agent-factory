@@ -1,5 +1,6 @@
 import { guard, json, jsonError } from "@/lib/api-util";
-import { isAdmin, setAcmeState } from "@/lib/demo-acme";
+import { isAdmin } from "@/lib/demo-acme";
+import { breakAcme } from "@/lib/demo-actions";
 
 export const dynamic = "force-dynamic";
 
@@ -7,7 +8,6 @@ export const dynamic = "force-dynamic";
 export function POST(request: Request): Promise<Response> {
   return guard("POST /api/demo/break", async () => {
     if (!isAdmin(request)) return jsonError("unauthorized", 401);
-    await setAcmeState({ broken: true });
-    return json({ ok: true, broken: true });
+    return json(await breakAcme());
   });
 }

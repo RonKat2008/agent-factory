@@ -7,6 +7,7 @@ import { Cog, Factory } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const NAV = [
+  { href: "/tour", label: "Tour", highlight: true },
   { href: "/", label: "Fleet" },
   { href: "/new", label: "New agent" },
   { href: "/outbox", label: "Outbox" },
@@ -49,6 +50,7 @@ export function TopBar() {
                 )}
               >
                 {n.label}
+                {"highlight" in n && n.highlight && !active ? <span aria-hidden className="ml-1.5 inline-block size-1.5 -translate-y-px rounded-full bg-violet-600" /> : null}
               </Link>
             );
           })}
