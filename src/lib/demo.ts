@@ -34,3 +34,28 @@ export function streamText(text: string): ReadableStream<Uint8Array> {
     },
   });
 }
+
+// ---- Canned outputs for the `llm` block and `llm_judge` test (DEMO_MODE) ----
+const CANNED_BULLET_FALLBACK = [
+  { text: "Canned demo finding: a notable item from the monitored source", url: "https://example.com/demo-1" },
+  { text: "Canned demo finding: a second notable item", url: "https://example.com/demo-2" },
+];
+
+/** Canned llm-block output per format; reuses real URLs/lines from the input when present. */
+export function cannedLlmOutput(format: "text" | "cited_bullets" | "issue_labels", input: string) {
+  if (format === "text") {
+    const text = "Canned DEMO_MODE summary of the input.";
+    return { text, markdown: text };
+  }
+  if (format === "issue_labels") {
+    const labels = [{ number: 1, labels: ["bug"], comment: "Canned demo triage: looks like a bug." }];
+    return { labels, markdown: labels.map((l) => `• #${l.number}: ${l.labels.join(", ")}`).join("\n") };
+  }
+  const found = [...input.matchAll(/^[-*•]?\s*(.{5,120}?)\s*\((https?:\/\/[^\s)]+)\)/gm)]
+    .slice(0, 3)
+    .map((m) => ({ text: m[1], url: m[2] }));
+  const bullets = found.length > 0 ? found : CANNED_BULLET_FALLBACK;
+  return { bullets, markdown: bullets.map((b) => `• ${b.text} — <${b.url}|source>`).join("\n"), empty: false };
+}
+
+export const CANNED_JUDGE_RESULT = { pass: true, reason: "DEMO_MODE: canned pass" } as const;
