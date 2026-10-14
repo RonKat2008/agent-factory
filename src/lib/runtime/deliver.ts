@@ -1,6 +1,7 @@
 // Delivery channel: Slack incoming webhook (when configured) + the outbox table (always).
 import { outboxInsert } from "@/lib/repo";
 import { getSlackWebhook } from "@/lib/connections";
+import { getAgentWebhook } from "@/lib/repo-agent-settings";
 import { extractAndStore } from "@/lib/knowledge";
 
 const SLACK_TIMEOUT_MS = 8_000;
@@ -14,8 +15,9 @@ export function feedbackLine(runId: string): string {
   return `<${base}?r=useful|👍 Useful> · <${base}?r=not_useful|👎 Not useful>`;
 }
 
-async function postToSlack(text: string): Promise<{ ok: boolean; error?: string } | null> {
-  const webhook = await getSlackWebhook();
+async function postToSlack(text: string, agentId?: string | null): Promise<{ ok: boolean; error?: string } | null> {
+  // The agent's own Slack (bring-your-own webhook) wins over the team channel.
+  const webhook = (agentId ? await getAgentWebhook(agentId) : null) ?? (await getSlackWebhook());
   if (!webhook) return null;
   try {
     const res = await fetch(webhook, {
@@ -44,7 +46,7 @@ async function record(agentId: string | null, runId: string | null, body: string
  */
 export async function deliver(d: { agentId: string; runId: string; message: string }): Promise<{ sent: boolean; error?: string }> {
   const body = `${d.message.trim()}\n${feedbackLine(d.runId)}`;
-  const slack = await postToSlack(body);
+  const slack = await postToSlack(body, d.agentId);
   const sent = slack === null ? true : slack.ok;
   if (slack && !slack.ok) console.error("[deliver]", slack.error);
   await record(d.agentId, d.runId, body, sent);
@@ -65,4 +67,12 @@ export async function postFactoryMessage(text: string, agentId: string | null = 
   const sent = slack === null ? true : slack.ok;
   await record(agentId, null, text, sent);
   return { sent };
+}
+
+/** One-off "send me a test" post to the agent's channel (own Slack, else team). No feedback links. Never throws. */
+export async function deliverTest(agentId: string, text: string): Promise<{ sent: boolean; error?: string }> {
+  const slack = await postToSlack(text, agentId);
+  const sent = slack === null ? true : slack.ok;
+  await record(agentId, null, text, sent);
+  return { sent, error: slack && !slack.ok ? slack.error : undefined };
 }

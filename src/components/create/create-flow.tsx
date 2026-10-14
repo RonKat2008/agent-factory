@@ -1,166 +1,351 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Loader2, RotateCcw, Rocket } from "lucide-react";
+import { ArrowLeft, Loader2, Power, RotateCcw, Send } from "lucide-react";
 import { track } from "@vercel/analytics";
-import { createAgent, getAgent, getFeed, goLive } from "@/lib/api-client";
+import {
+  createAgent,
+  getAgent,
+  getAgentSettings,
+  getFeed,
+  goLive,
+  saveAgentSettings,
+  sendTest,
+} from "@/lib/api-client";
 import type { AgentDetail, FeedEvent } from "@/lib/types";
-import { BTN_PRIMARY, BTN_SECONDARY, LABEL } from "@/components/ui-tokens";
-import { StatusPill } from "@/components/status-pill";
-import { PromptStage } from "./prompt-stage";
-import { PlanCard } from "./plan-card";
-import { BuildLog } from "./build-log";
+import { HomeBuilder } from "@/components/home/home-builder";
+import { Stepper, type StepIndex } from "./stepper";
+import { PlanStep } from "./plan-step";
+import { PreviewStep } from "./preview-step";
+import { SendTo, SLACK_WEBHOOK_RE, TEAM_CHANNEL, type Destination } from "./send-to";
+import { TechDetails } from "./tech-details";
+import { type SchedulePick, describePick, pickToUtcCron, utcCronToPick } from "./schedule";
 import { MOCK_AGENT_ID, MOCK_MODE, simulateSnapshot } from "./simulate";
 
 const POLL_MS = MOCK_MODE ? 400 : 2000;
 const byTime = (a: FeedEvent, b: FeedEvent) => a.createdAt.localeCompare(b.createdAt);
+const BTN_BIG =
+  "inline-flex h-11 items-center justify-center gap-2 rounded-[4px] px-5 text-[15px] font-medium transition-[background-color,transform] active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600/60 disabled:cursor-not-allowed disabled:opacity-50";
+const lowerFirst = (s: string) => s.charAt(0).toLowerCase() + s.slice(1);
+const errText = (e: unknown, fallback: string) => (e instanceof Error ? e.message : fallback);
+
+function progressText(detail: AgentDetail | null, events: FeedEvent[]): string {
+  const status = detail?.agent.status ?? "building";
+  const fixes = events.filter((e) => e.type === "self_fixed").length;
+  const fixed = fixes > 0 ? ` Found ${fixes === 1 ? "a problem" : `${fixes} problems`} and fixed ${fixes === 1 ? "it" : "them"}.` : "";
+  if (status === "ready" || status === "live") return `Done. It passed every check.${fixed}`;
+  if (status === "testing" || events.some((e) => e.type === "dry_run")) return `Testing it on real data…${fixed}`;
+  if (detail?.agent.plan) return "Building your agent…";
+  return "Reading your request…";
+}
 
 export function CreateFlow() {
   const router = useRouter();
-  const [request, setRequest] = useState("");
-  const [agentId, setAgentId] = useState<string | null>(null);
-  const [startedAt, setStartedAt] = useState(0);
-  const [submitting, setSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const params = useSearchParams();
+  const requestParam = params.get("request");
+  const [agentId, setAgentId] = useState<string | null>(() => params.get("agent"));
+  const [request, setRequest] = useState(requestParam ?? "");
+  const [startError, setStartError] = useState<string | null>(null);
   const [detail, setDetail] = useState<AgentDetail | null>(null);
   const [events, setEvents] = useState<FeedEvent[]>([]);
   const [pollError, setPollError] = useState<string | null>(null);
-  const [going, setGoing] = useState(false);
+  const [startedAt, setStartedAt] = useState(() => Date.now());
+  const started = useRef<string | null>(null);
+
+  const [confirmed, setConfirmed] = useState(false);
+  const [draftPick, setDraftPick] = useState<SchedulePick | null>(null);
+  const [destination, setDestination] = useState<Destination>("team");
+  const [webhook, setWebhook] = useState("");
+  const [hasSavedWebhook, setHasSavedWebhook] = useState(false);
+  const [busy, setBusy] = useState<null | "continue" | "test" | "on">(null);
 
   const status = detail?.agent.status ?? "building";
   const terminal = status === "ready" || status === "live" || status === "needs_human";
 
+  // Start a build from /new?request=… once per request, then swap the URL to ?agent=<id> so a refresh resumes it.
+  useEffect(() => {
+    const text = requestParam?.trim();
+    if (!text || started.current === text) return;
+    // No cancellation on cleanup: the ref guard makes this run once per request (also under Strict Mode's
+    // double effect), so the one in-flight create must be allowed to land.
+    started.current = text;
+    (async () => {
+      track("agent_build_started");
+      try {
+        const id = MOCK_MODE ? MOCK_AGENT_ID : (await createAgent(text)).agentId;
+        setRequest(text);
+        setDetail(null);
+        setEvents([]);
+        setConfirmed(false);
+        setDraftPick(null);
+        setStartedAt(Date.now());
+        setAgentId(id);
+        setStartError(null);
+        router.replace(`/new?agent=${id}`, { scroll: false });
+      } catch (e) {
+        started.current = null;
+        setStartError(errText(e, "Could not start building your agent"));
+      }
+    })();
+  }, [requestParam, router]);
+
+  const load = useCallback(async () => {
+    if (!agentId) return;
+    const snap = MOCK_MODE
+      ? await simulateSnapshot(startedAt)
+      : await Promise.all([getAgent(agentId), getFeed({ agentId })]).then(([d, ev]) => (d ? { detail: d, events: ev } : null));
+    if (!snap) return;
+    setDetail(snap.detail);
+    setEvents([...snap.events].sort(byTime));
+    setPollError(null);
+  }, [agentId, startedAt]);
+
   useEffect(() => {
     if (!agentId || terminal) return;
-    let cancelled = false;
-    const tick = async () => {
-      try {
-        const snap = MOCK_MODE
-          ? await simulateSnapshot(startedAt)
-          : await Promise.all([getAgent(agentId), getFeed({ agentId })]).then(([d, ev]) =>
-              d ? { detail: d, events: ev } : null,
-            );
-        if (cancelled || !snap) return;
-        setDetail(snap.detail);
-        setEvents([...snap.events].sort(byTime));
-        setPollError(null);
-      } catch (err) {
-        if (!cancelled) setPollError(err instanceof Error ? err.message : "Lost contact with the factory");
-      }
-    };
+    let alive = true;
+    const tick = () =>
+      load().catch((e) => {
+        if (alive) setPollError(errText(e, "Lost contact with the factory"));
+      });
     void tick();
     const t = setInterval(tick, POLL_MS);
     return () => {
-      cancelled = true;
+      alive = false;
       clearInterval(t);
     };
-  }, [agentId, startedAt, terminal]);
+  }, [agentId, terminal, load]);
 
-  const submit = useCallback(async () => {
-    const text = request.trim();
-    if (!text || submitting) return;
-    setSubmitting(true);
-    setSubmitError(null);
-    track("agent_build_started");
+  // Entering the preview step: pick up a webhook saved earlier for this agent.
+  useEffect(() => {
+    if (!agentId || !confirmed) return;
+    let alive = true;
+    getAgentSettings(agentId)
+      .then((s) => {
+        if (!alive || !s.hasOwnSlack) return;
+        setHasSavedWebhook(true);
+        setDestination("own");
+      })
+      .catch(() => {
+        /* settings are optional; team channel stays the default */
+      });
+    return () => {
+      alive = false;
+    };
+  }, [agentId, confirmed]);
+
+  const active = detail?.versions.find((v) => v.version === detail.agent.currentVersion) ?? detail?.versions[0] ?? null;
+  const spec = active?.spec ?? null;
+  const basePick = spec ? utcCronToPick(spec.schedule) : null;
+  const pick = draftPick ?? basePick;
+  const dryRun = detail?.runs.find((r) => r.kind === "dry_run" && r.status !== "running") ?? null;
+  const name = detail?.agent.name && detail.agent.name !== "New agent" ? detail.agent.name : "Your agent";
+  const ready = status === "ready";
+
+  const continueToPreview = async () => {
+    if (!agentId || busy) return;
+    setBusy("continue");
     try {
-      const id = MOCK_MODE ? MOCK_AGENT_ID : (await createAgent(text)).agentId;
-      setDetail(null);
-      setEvents([]);
-      setStartedAt(Date.now());
-      setAgentId(id);
-    } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Could not start the build");
+      if (draftPick && spec && pickToUtcCron(draftPick) !== spec.schedule && !MOCK_MODE) {
+        await saveAgentSettings(agentId, { schedule: pickToUtcCron(draftPick) });
+        toast.success(`Schedule saved: ${lowerFirst(describePick(draftPick))}`);
+        await load();
+      }
+      setDraftPick(null);
+      setConfirmed(true);
+    } catch (e) {
+      toast.error(errText(e, "Couldn't save the schedule"));
     } finally {
-      setSubmitting(false);
+      setBusy(null);
     }
-  }, [request, submitting]);
+  };
 
-  const retry = () => {
+  /** Saves the chosen destination. Returns false (with a toast) when the user still has to paste a webhook. */
+  const applyDestination = async (): Promise<boolean> => {
+    if (!agentId) return false;
+    const url = webhook.trim();
+    if (destination === "own") {
+      if (!url) {
+        if (hasSavedWebhook) return true;
+        toast.error("Paste your Slack webhook URL first, or choose the team channel.");
+        return false;
+      }
+      if (!SLACK_WEBHOOK_RE.test(url)) {
+        toast.error("That isn't a Slack webhook URL. It starts with https://hooks.slack.com/services/");
+        return false;
+      }
+      await saveAgentSettings(agentId, { slackWebhook: url });
+      setHasSavedWebhook(true);
+      setWebhook("");
+      return true;
+    }
+    if (hasSavedWebhook) {
+      await saveAgentSettings(agentId, { slackWebhook: null });
+      setHasSavedWebhook(false);
+    }
+    return true;
+  };
+
+  const where = destination === "own" ? "your Slack channel" : `#${TEAM_CHANNEL}`;
+
+  const testNow = async () => {
+    if (!agentId || busy) return;
+    setBusy("test");
+    try {
+      if (!(await applyDestination())) return;
+      await sendTest(agentId);
+      track("agent_test_send");
+      toast.success(`Test sent to ${where}. Go take a look.`);
+    } catch (e) {
+      toast.error(errText(e, "Couldn't send the test"));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const turnOn = async () => {
+    if (!agentId || busy) return;
+    setBusy("on");
+    try {
+      if (!(await applyDestination())) {
+        setBusy(null);
+        return;
+      }
+      if (!MOCK_MODE) await goLive(agentId);
+      track("agent_go_live");
+      toast.success(`Your agent is on. It will message ${where} ${pick ? lowerFirst(describePick(pick)) : "on schedule"}.`);
+      router.push(`/agents/${agentId}`);
+    } catch (e) {
+      toast.error(errText(e, "Couldn't turn it on"));
+      setBusy(null);
+    }
+  };
+
+  const startOver = () => {
+    started.current = null;
     setAgentId(null);
     setDetail(null);
     setEvents([]);
-    setPollError(null);
+    setConfirmed(false);
+    setStartError(null);
+    router.push("/new");
   };
 
-  const publish = async () => {
-    if (!agentId || going) return;
-    setGoing(true);
-    try {
-      if (!MOCK_MODE) await goLive(agentId);
-      track("agent_go_live");
-      toast.success("Agent is live");
-      router.push(`/agents/${agentId}`);
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not go live");
-      setGoing(false);
-    }
-  };
-
-  if (!agentId) {
-    return (
-      <div className="py-6 sm:py-10">
-        <PromptStage value={request} onChange={setRequest} onSubmit={submit} pending={submitting} error={submitError} />
-      </div>
-    );
-  }
-
-  const spec = detail?.versions[0]?.spec ?? null;
-  const lastError = [...events].reverse().find((e) => e.type === "needs_human" || e.type === "test_failed");
+  const step: StepIndex = !agentId ? 0 : confirmed && (ready || status === "live") ? 2 : 1;
+  const shownRequest = request || detail?.agent.request || "";
 
   return (
-    <div className="mx-auto w-full max-w-4xl py-4 sm:py-6">
-      <p className={LABEL}>New agent / 02 build</p>
-      <blockquote className="mt-2 border-l-2 border-stone-900 pl-4 text-xl font-medium leading-snug text-stone-900 sm:text-2xl">
-        “{request.trim()}”
-      </blockquote>
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 py-2 sm:py-4">
+      <Stepper current={step} />
 
-      <div className="mt-4 flex flex-wrap items-center gap-3">
-        <StatusPill status={status} />
-        <span className="font-mono text-[11px] text-stone-500">{agentId.slice(0, 8)}</span>
-        {pollError && <span className="text-[12px] text-amber-700">Reconnecting… {pollError}</span>}
-      </div>
-
-      <div className="mt-6 grid gap-4 lg:grid-cols-2">
-        <PlanCard plan={detail?.agent.plan ?? null} spec={spec} />
-        <BuildLog events={events} active={!terminal} />
-      </div>
-
-      <div className="mt-6 flex flex-wrap items-center gap-3">
-        {status === "ready" && (
-          <>
-            <button
-              type="button"
-              onClick={publish}
-              disabled={going}
-              className={`${BTN_PRIMARY} h-10 px-6 text-[14px]`}
-            >
-              {going ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Rocket className="size-4" aria-hidden />}
-              {going ? "Going live…" : "Go live"}
-            </button>
-            <span className="text-[13px] text-stone-500">All tests passed. Nothing runs on a schedule until you go live.</span>
-          </>
-        )}
-        {status === "needs_human" && (
-          <div className="flex w-full flex-col gap-3 border border-red-300 bg-red-50 p-3 rounded-[3px]">
-            <p className="font-mono text-[12.5px] text-red-900">
-              {lastError?.message ?? "The factory could not make this pass its tests."}
-            </p>
-            <button
-              type="button"
-              onClick={retry}
-              className={`${BTN_SECONDARY} w-fit`}
-            >
-              <RotateCcw className="size-3.5" aria-hidden />
-              Try again
-            </button>
+      {step === 0 &&
+        (requestParam && !startError ? (
+          <p className="flex items-center gap-2 py-10 text-[16px] text-stone-700">
+            <Loader2 className="size-4 animate-spin" aria-hidden /> Starting your agent…
+          </p>
+        ) : (
+          <div className="py-2 sm:py-6">
+            {startError && (
+              <p role="alert" className="mb-5 rounded-[4px] border border-red-300 bg-red-50 px-3 py-2 text-[14px] text-red-800">
+                {startError}
+              </p>
+            )}
+            <HomeBuilder initial={requestParam ?? request} />
           </div>
-        )}
-        {(status === "building" || status === "testing") && (
-          <span className="text-[13px] text-stone-500">The factory is building and testing. This usually takes under a minute.</span>
-        )}
-      </div>
+        ))}
+
+      {step > 0 && shownRequest && (
+        <blockquote className="border-l-4 border-violet-700 pl-4 text-[clamp(20px,2.6vw,26px)] font-medium leading-snug text-stone-900">
+          “{shownRequest}”
+        </blockquote>
+      )}
+
+      {step === 1 && (
+        <>
+          <div className="flex flex-wrap items-center gap-3 text-[15px] text-stone-700" aria-live="polite">
+            {!terminal && <Loader2 className="size-4 animate-spin text-violet-700" aria-hidden />}
+            {status !== "needs_human" && <span>{progressText(detail, events)}</span>}
+            {pollError && <span className="text-[13px] text-amber-700">Reconnecting…</span>}
+          </div>
+
+          {status === "needs_human" ? (
+            <div className="flex flex-col gap-3 rounded-[6px] border border-red-300 bg-red-50 p-4">
+              <p className="text-[15px] font-medium text-red-900">We couldn’t get this agent to pass its checks.</p>
+              <p className="text-[14px] text-red-900/80">
+                Try describing it a little differently, for example name the website or the exact thing you want to hear about.
+              </p>
+              <button type="button" onClick={startOver} className={`${BTN_BIG} w-fit border border-red-300 bg-white text-red-900 hover:bg-red-100`}>
+                <RotateCcw className="size-4" aria-hidden /> Try again
+              </button>
+            </div>
+          ) : (
+            <>
+              <PlanStep plan={detail?.agent.plan ?? spec?.plan ?? null} spec={spec} pick={pick} onPick={setDraftPick} canEdit={ready} />
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={continueToPreview}
+                  disabled={!ready || busy !== null}
+                  className={`${BTN_BIG} bg-stone-900 text-[#F6F4EF] hover:bg-violet-700`}
+                >
+                  {busy === "continue" && <Loader2 className="size-4 animate-spin" aria-hidden />}
+                  Looks good, show me the message
+                </button>
+                {!ready && <span className="text-[13px] text-stone-500">Usually takes under a minute. Nothing is sent while we build.</span>}
+              </div>
+            </>
+          )}
+        </>
+      )}
+
+      {step === 2 && (
+        <>
+          <PreviewStep
+            name={name}
+            spec={spec}
+            run={dryRun}
+            events={events}
+            channel={destination === "own" ? "your-channel" : TEAM_CHANNEL}
+            time={pick ? describePick(pick).replace(/^.* at /, "") : "9:00 AM"}
+          />
+          <div className="grid gap-5 rounded-[6px] border border-stone-300 bg-[#FBFAF7] p-4 sm:p-5">
+            <SendTo
+              destination={destination}
+              onDestination={setDestination}
+              webhook={webhook}
+              onWebhook={setWebhook}
+              hasSavedWebhook={hasSavedWebhook}
+              disabled={busy !== null}
+            />
+            <div className="flex flex-wrap items-center gap-3 border-t border-stone-200 pt-4">
+              <button type="button" onClick={testNow} disabled={busy !== null} className={`${BTN_BIG} border border-stone-900 bg-white text-stone-900 hover:bg-stone-100`}>
+                {busy === "test" ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Send className="size-4" aria-hidden />}
+                Send me a test now
+              </button>
+              {status === "live" ? (
+                <Link href={`/agents/${agentId}`} className={`${BTN_BIG} bg-emerald-700 text-white hover:bg-emerald-800`}>
+                  It’s on. Open your agent
+                </Link>
+              ) : (
+                <button type="button" onClick={turnOn} disabled={busy !== null} className={`${BTN_BIG} bg-stone-900 text-[#F6F4EF] hover:bg-violet-700`}>
+                  {busy === "on" ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Power className="size-4" aria-hidden />}
+                  Turn on
+                </button>
+              )}
+              <span className="text-[13px] text-stone-500">
+                {pick ? `${describePick(pick)}. ` : ""}You can pause it any time.
+              </span>
+            </div>
+          </div>
+          <button type="button" onClick={() => setConfirmed(false)} className="inline-flex w-fit items-center gap-1.5 text-[13px] text-stone-600 hover:text-stone-900">
+            <ArrowLeft className="size-3.5" aria-hidden /> Back to the plan
+          </button>
+        </>
+      )}
+
+      {step > 0 && <TechDetails events={events} active={!terminal} spec={spec} run={dryRun} />}
     </div>
   );
 }

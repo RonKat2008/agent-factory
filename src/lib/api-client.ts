@@ -66,3 +66,21 @@ export const rejectVersion = (id: string, v: number) =>
   post<{ ok: true }>(`/api/agents/${id}/versions/${v}/reject`);
 export const approveRun = (runId: string, approve: boolean) =>
   post<{ run: Run }>(`/api/runs/${runId}/approve`, { approve });
+
+// Per-agent settings (schedule as UTC cron, own Slack webhook) and one-off test sends.
+export type AgentSettings = { schedule: string; hasOwnSlack: boolean };
+export async function getAgentSettings(id: string): Promise<AgentSettings> {
+  if (USE_MOCKS) return { schedule: mock.agentDetail(id)?.agent.schedule ?? "0 16 * * *", hasOwnSlack: false };
+  return call<AgentSettings>(`/api/agents/${id}/settings`);
+}
+export async function saveAgentSettings(
+  id: string,
+  patch: { schedule?: string; slackWebhook?: string | null },
+): Promise<AgentSettings> {
+  if (USE_MOCKS) return { schedule: patch.schedule ?? "0 16 * * *", hasOwnSlack: Boolean(patch.slackWebhook) };
+  return post<AgentSettings>(`/api/agents/${id}/settings`, patch);
+}
+export async function sendTest(id: string): Promise<{ sent: true }> {
+  if (USE_MOCKS) return { sent: true };
+  return post<{ sent: true }>(`/api/agents/${id}/test-send`);
+}

@@ -171,7 +171,7 @@ export function TourPanel() {
         </button>
         <span className="ml-auto flex gap-5">
           <Link href="/new" className={cn("font-medium text-stone-900 hover:underline", FOCUS)}>Build your own agent →</Link>
-          <Link href="/" className={cn("font-medium text-stone-900 hover:underline", FOCUS)}>Fleet →</Link>
+          <Link href="/fleet" className={cn("font-medium text-stone-900 hover:underline", FOCUS)}>Fleet →</Link>
         </span>
       </footer>
     </div>

@@ -3,6 +3,7 @@ import { start } from "workflow/api";
 import { z } from "zod";
 import { createAgent, listAgents, logEvent, updateAgent } from "@/lib/repo";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { setCreatedByIp } from "@/lib/repo-agent-settings";
 import { blockBots } from "@/lib/bot-guard";
 import { buildAgentWorkflow } from "@/workflows/build-agent";
 
@@ -25,6 +26,7 @@ export function POST(req: Request): Promise<Response> {
     const limited = await rateLimit("build", { key: clientIp(req), perKey: { max: 5, windowSec: 600 }, global: { max: 30, windowSec: 3600 } });
     if (limited) return limited;
     const agentId = await createAgent({ name: "New agent", request, schedule: DEFAULT_SCHEDULE, status: "building", requiresApproval: false });
+    await setCreatedByIp(agentId, clientIp(req)).catch((e) => console.error("[agents] created_by_ip:", (e as Error).message));
     try {
       await start(buildAgentWorkflow, [{ agentId, request }]);
     } catch (e) {

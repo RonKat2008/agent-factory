@@ -36,7 +36,7 @@ function NotFound({ id }: { id: string }) {
       <p className="font-mono text-[40px] leading-none tabular-nums text-stone-900">404</p>
       <p className="mt-3 text-[14px] text-stone-900">No agent with that id.</p>
       <p className="mt-1 break-all font-mono text-[11px] text-stone-500">{id}</p>
-      <Link href="/" className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-sky-700 underline underline-offset-2">
+      <Link href="/fleet" className="mt-4 inline-flex items-center gap-1.5 text-[13px] text-sky-700 underline underline-offset-2">
         <ArrowLeft className="size-3.5" /> Back to fleet
       </Link>
     </div>
@@ -82,7 +82,7 @@ export function AgentDetailView({ id }: { id: string }) {
   return (
     <div className="flex flex-col gap-5">
       <Link
-        href="/"
+        href="/fleet"
         className="inline-flex w-fit items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-stone-500 hover:text-stone-900"
       >
         <ArrowLeft className="size-3.5" aria-hidden /> Fleet
