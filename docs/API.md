@@ -36,6 +36,8 @@ No auth on dashboard routes (public demo). Admin routes need `?key=$ADMIN_KEY`.
 | GET | `/api/cron/tick` | `Authorization: Bearer $CRON_SECRET`. Atomically claims due agents, starts runs. `{ started: string[] }` |
 | GET | `/api/health` | `{ ok, db }` |
 | POST | `/api/demo/break?key=` | Acme moves changelog → `/demo/acme/updates`, old URL 404s |
+| POST | `/api/demo/publish?key=` | Acme publishes the next changelog entry (gives the watcher something new) |
+| POST | `/api/demo/seed?key=` | Idempotently seeds the 3 demo agents |
 | POST | `/api/demo/reset?key=` | Acme restored, watcher rolled back to v1, its memory cleared |
 
 ## Demo site (served by this app)
