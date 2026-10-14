@@ -1,7 +1,7 @@
 # Status: Pitcrew
 
 Product renamed from Agent Factory to **Pitcrew** (F1 pit-stop theme). Live: https://agent-factory-steel.vercel.app
-Alias: TBD
+Live: https://pitcrew-ai.vercel.app (also https://agent-factory-steel.vercel.app)
 
 **Why Pitcrew:** built at an event with an F1 team, so we leaned in. Your agents get a pit crew: built, tested, running, and fixed in seconds when they break.
 

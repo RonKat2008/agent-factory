@@ -14,8 +14,8 @@ Built for the Vercel Fast Forward hackathon, Agents & Factories track.
 
 | What | URL |
 |---|---|
-| App | https://agent-factory-steel.vercel.app |
-| Judge Tour (public, no sign-in) | https://agent-factory-steel.vercel.app/tour |
+| App | https://pitcrew-ai.vercel.app |
+| Judge Tour (public, no sign-in) | https://pitcrew-ai.vercel.app/tour |
 | Fleet Ops agent (eve) | https://agent-factory-ops.vercel.app (health: `/eve/v1/health`) |
 
 ## 2-minute judge tour

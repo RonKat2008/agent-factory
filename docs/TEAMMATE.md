@@ -6,12 +6,12 @@ Your role is demo and submission: you present or back up the demo, own the Devpo
 
 **Deadline:** submit by 15:50 PT. **Feature freeze 15:15.**
 
-Live app: https://agent-factory-steel.vercel.app (Tour at `/tour`). Fleet Ops agent: https://agent-factory-ops.vercel.app.
+Live app: https://pitcrew-ai.vercel.app (Tour at `/tour`). Fleet Ops agent: https://agent-factory-ops.vercel.app.
 
 ## Your jobs
 
 ### (a) Slack app credentials (do first)
-Create a Slack app at https://api.slack.com/apps for "Sign in with Slack" / Add to Slack and send the client ID, client secret, and signing/state secret to Ronit privately (do not post or commit them). Ronit sets `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, and `SLACK_STATE_SECRET` in Vercel. The redirect URL to register is the app's `/api/slack/oauth/callback` callback on https://agent-factory-steel.vercel.app. Also create a `#factory-demo` channel for the demo posts.
+Create a Slack app at https://api.slack.com/apps for "Sign in with Slack" / Add to Slack and send the client ID, client secret, and signing/state secret to Ronit privately (do not post or commit them). Ronit sets `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, and `SLACK_STATE_SECRET` in Vercel. The redirect URL to register is the app's `/api/slack/oauth/callback` callback on https://pitcrew-ai.vercel.app. Also create a `#factory-demo` channel for the demo posts.
 
 ### (b) Own the Devpost submission
 Paste each field from `docs/PITCH.md` into Devpost. Add the live URL, the repo link, the team names, and the backup video, then submit before 15:50.
