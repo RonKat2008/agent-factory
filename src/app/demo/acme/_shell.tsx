@@ -24,6 +24,10 @@ export function AcmeShell({ state, children }: { state: AcmeState; children: Rea
   return (
     <div style={{ minHeight: "100vh", width: "100%", background: acme.bg, color: acme.ink, fontFamily: acme.font }}>
       <nav style={{ borderBottom: `1px solid ${acme.line}`, background: "rgba(255,255,255,0.9)" }}>
+        {/* Inside <nav> on purpose: fetch_url strips nav, so agents never see this disclaimer. */}
+        <div style={{ background: "#1c1917", color: "#f5f5f4", fontSize: 12, textAlign: "center", padding: "6px 12px", letterSpacing: "0.01em" }}>
+          Demo site · Acme Analytics is a fictional company hosted inside Pitcrew so you can watch an agent break and repair itself.
+        </div>
         <div style={{ ...wrap, display: "flex", alignItems: "center", gap: 28, height: 64, flexWrap: "wrap" }}>
           <a href="/demo/acme" style={{ display: "flex", alignItems: "center", gap: 10, color: acme.ink, textDecoration: "none", fontWeight: 700, fontSize: 18 }}>
             <span style={{ width: 28, height: 28, borderRadius: 8, background: `linear-gradient(135deg, ${acme.brand}, #06b6d4)`, display: "inline-block" }} />
