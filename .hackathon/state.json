@@ -4,7 +4,7 @@
   "event": "Vercel Fast Forward (Agents & Factories)",
   "startedAt": "2026-10-14T11:24:10-07:00",
   "deadline": "2026-10-14T16:00:00-07:00",
-  "stage": "foundation",
+  "stage": "build",
   "stageHistory": [
     {
       "stage": "kickoff",
@@ -13,16 +13,24 @@
     {
       "stage": "foundation",
       "enteredAt": "2026-10-14T11:28:24-07:00"
+    },
+    {
+      "stage": "build",
+      "enteredAt": "2026-10-14T12:08:46-07:00"
+    },
+    {
+      "stage": "build",
+      "enteredAt": "2026-10-14T12:23:58-07:00"
     }
   ],
   "gates": {
     "idea-picked": null,
     "spec-approved": "2026-10-14T11:28:24-07:00",
-    "skeleton-deployed": null,
+    "skeleton-deployed": "2026-10-14T12:08:46-07:00",
     "feature-freeze": null,
     "submitted": null
   },
-  "prodUrl": null,
+  "prodUrl": "https://agent-factory-steel.vercel.app",
   "repo": null,
   "team": 2
 }
