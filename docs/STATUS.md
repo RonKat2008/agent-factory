@@ -2,29 +2,24 @@
 
 Updated: 2026-10-14. Submit by 15:50 PT. Feature freeze 15:15.
 
-Legend: ✅ done, 🔨 in progress, ⏭ next, ⛔ blocked
+## Done
+- Core: spec schema, 12 blocks, 6 test kinds, runtime, Workflow DevKit workflows (run, build, repair), cron tick, Neon persistence.
+- Test-gated delivery; judge-only failures hold the post.
+- Self-repair (~8s) with regression tests; public Tour (break, publish, reset).
+- Agent chains (Acme watcher -> Competitor deep-dive with Exa) and the fleet knowledge graph with the `recall` block.
+- Graph page (Flow and Knowledge views); Ask Ops (Cmd+K) with approvals, backed by the eve Fleet Ops agent.
+- Beginner home, 3-step create flow, Slack preview, "Send me a test now", editable schedule.
+- Sign in with Slack (code complete); custom connectors (HTTP and MCP) with a Build a connector guide; Exa, Kernel, Context7, DeepWiki connected.
+- Vercel Sandbox `run_code`; Export as eve agent; English edits, approvals, thumbs-down to proposed fix.
+- BotID, rate limits, encrypted credentials; Analytics and Speed Insights; Neon dev branch vs prod database.
+- Production deployed and seeded (3 agents, chain agent, knowledge backfill).
+- Docs: README, PITCH, DEMO, STATUS, TEAMMATE.
 
-## ✅ Done
-- Contract: `docs/SPEC.md`, `docs/API.md`, `src/lib/types.ts`, `src/lib/spec.ts`, `db/schema.sql`
-- Foundation: Neon Postgres, AI Gateway, Workflow DevKit spike green
-- Block library: fetch_url, fetch_rss, hn_search, github_issues, llm, filter, diff_with_memory, send_slack, require_approval
-- Persistence and read APIs (agents, runs, feed, stats, outbox)
-- UI: Fleet, Create, Agent detail, Outbox
+## Remaining
+- Slack app credentials (`SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET`, `SLACK_STATE_SECRET`) set in Vercel, redirect URL registered.
+- Rehearsal of `docs/DEMO.md`, at least twice before 15:15.
+- Backup video at 15:15 (under 3 minutes).
+- Devpost submit before 15:50, using `docs/PITCH.md`; fill in team names in the README.
 
-## 🔨 In progress
-- Task 4: runtime, cron tick, Acme demo site, seed script
-- Task 5: builder (`buildAgent`, edit)
-- Task 6: self-repair (`repairAgent`, link candidates, regression test)
-- UI polish
-
-## ⏭ Next
-- Production deploy and `npm run db:seed`
-- Slack webhook wired into Vercel env
-- Rehearsal x3, backup video at 15:15, Devpost submit
-
-## ⛔ Blockers
-- Slack webhook URL from the teammate (see `docs/TEAMMATE.md`, job a)
-
-## Cut-lines still in force
-- 14:30 repair flaky: DEMO_MODE deterministic repair carries the demo
-- 15:00 behind: cut thumbs-down proposed edit, then approval
+## Blockers
+- None known. Slack OAuth cannot be tested end to end until the credentials exist; the Outbox and `SLACK_WEBHOOK_URL` fallback cover the demo.

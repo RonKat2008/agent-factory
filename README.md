@@ -2,11 +2,27 @@
 
 > Other tools help you build an agent. Ours takes responsibility for keeping it working.
 
-**Live demo:** https://agent-factory-steel.vercel.app — start with **Tour** (60 seconds: break a competitor site, watch the factory repair its own agent)
-
-Describe a recurring job in one sentence and Agent Factory builds the agent, writes its tests, ships it only if the tests pass, runs it on a schedule, and repairs it when it breaks. Agents are JSON specs assembled from a fixed block library, so every build, edit, and repair is a versioned, testable diff rather than generated code. The failure that triggered a repair becomes a permanent regression test, and thumbs-down feedback on a Slack post becomes a proposed edit to the agent.
+Describe a recurring job in one sentence. Agent Factory builds the agent, writes its tests, ships it only if the tests pass, runs it on a schedule, and repairs it when it breaks. Agents are JSON specs assembled from a fixed block library, so every build, edit, and repair is a versioned, testable diff rather than generated code. Agents can trigger other agents, and every post feeds a fleet knowledge graph that later agents can recall.
 
 Built for the Vercel Fast Forward hackathon, Agents & Factories track.
+
+## Live links
+
+| What | URL |
+|---|---|
+| App | https://agent-factory-steel.vercel.app |
+| Judge Tour (public, no sign-in) | https://agent-factory-steel.vercel.app/tour |
+| Fleet Ops agent (eve) | https://agent-factory-ops.vercel.app (health: `/eve/v1/health`) |
+
+## 2-minute judge tour
+
+No account needed. Open the app, then:
+
+1. **Tour -> Break.** Open `/tour` and click Break. The fake competitor site (Acme) "redesigns" and its changelog URL starts returning 404. Run the Competitor watcher and watch the factory repair itself in about 8 seconds: diagnose, patch, re-test, new version. Open the diff: the URL changed and one regression test was added.
+2. **Publish.** Click Publish on the Tour. The watcher now sees a new Acme release and posts; that post fires the chained Competitor deep-dive agent, which researches the release with Exa and posts its own analysis. Check the Outbox if Slack is not connected.
+3. **Graph.** Open Graph. The Flow view shows the watcher feeding the deep-dive; the Knowledge view shows the entities extracted from every post.
+4. **Ask Ops.** Press Cmd+K (Ctrl+K on Windows) and ask "why did the watcher break?". The eve Fleet Ops agent answers from run history. Anything that changes the fleet (pause, edit, re-run) asks for your approval first.
+5. **Build your own.** Go to the home page, type a job in one sentence, review the plan and the Slack preview, click "Send me a test now", and go live. Sign in with Slack to have posts go to your own channel.
 
 ## How it works
 
@@ -14,134 +30,176 @@ Built for the Vercel Fast Forward hackathon, Agents & Factories track.
  "Every weekday, tell #product what our competitors shipped"
         |
         v
- +-----------+   +---------+   +---------+   +-----------+   +--------+
- |  request  |-->|  spec   |-->| dry run |-->|   tests   |-->|  live  |
- | (English) |   | (JSON   |   | (real   |   | (6 kinds) |   | (cron) |
- +-----------+   |  blocks)|   |  blocks)|   +-----+-----+   +----+---+
-                 +----^----+   +---------+         | fail         |
-                      |                            v              v
-                      |                     +-----------+   +-----------+
-                      +---- revise (<=3) ---|  self-fix |   | cron run  |
-                                            +-----------+   | every min |
-                                                            +----+------+
-                                                                 | step fails
-                                                                 v
-   +-----------+   +---------+   +----------+   +--------------+
-   | new       |<--| re-test |<--|  patch   |<--|  diagnose    |
-   | version + |   | (old +  |   |  spec    |   |  (error, I/O,|
-   | regression|   |  new    |   |          |   |  link        |
-   | test      |   |  tests) |   +----------+   |  candidates) |
-   +-----+-----+   +---------+                  +--------------+
-         |
-         v
-   Slack: "I fixed X because Y, and added a regression test. [diff]"
+ +---------+   +---------+   +---------+   +----------+   +---------+
+ | request |-->|  spec   |-->| dry run |-->|  tests   |-->|  live   |
+ | English |   | (JSON   |   | (real   |   | (6 kinds)|   | (cron)  |
+ +---------+   |  blocks)|   |  blocks)|   +----+-----+   +----+----+
+               +----^----+   +---------+        | fail         |
+                    |                           v              v
+                    +------ revise (<=3) --- self-fix     runAgent step
+                                                          (durable workflow)
+                                                               |
+              +------------------------+----------------------+
+              | step fails             | tests pass           | post lands
+              v                        v                      v
+      +---------------+      +-----------------+     +------------------+
+      | repairAgent   |      | deliver: Slack  |     | knowledge: extract|
+      | diagnose,     |      | (or hold if the |     | entities from the |
+      | patch, re-test|      |  judge test     |     | post -> graph;    |
+      | + regression  |      |  failed)        |     | `recall` block    |
+      | test, v+1     |      +--------+--------+     | reads it later    |
+      +---------------+               |              +------------------+
+                                      v
+                          +------------------------+
+                          | chain: event trigger   |
+                          | fires downstream agent |
+                          | (watcher -> deep-dive) |
+                          +------------------------+
 ```
 
-### Block library
+Failures (a 404, a bad link, a thumbs-down) become either a repair with a regression test or a proposed edit. Nothing replaces an active version until its tests pass.
 
-An agent spec (`src/lib/spec.ts`) is a schedule, an ordered list of steps, a list of tests, and a plan card. Steps reference earlier outputs with templates such as `{{steps.page.text}}`. Blocks never throw; they return `{ ok, output | error }`, which is what makes repair possible.
+## Features
+
+**Build**
+- Beginner home and a 3-step create flow: describe, review the plan card with a Slack preview, go live. "Send me a test now" posts a real sample, and the schedule is editable in plain terms.
+- Builder turns English into a Zod-validated JSON spec, dry-runs it against real sources, and revises up to 3 times from failed tests.
+- Export as eve agent: download a proven agent as a standalone eve project.
+
+**Run**
+- Vercel Cron ticks every minute and claims due agents; each run is a durable Workflow DevKit workflow with every step's input and output recorded.
+- Test-gated delivery: a run posts only after its tests pass. If only the LLM-judge test fails, the post is held rather than sent.
+- Agent chains: an agent can trigger another when it posts. The Acme watcher triggers the Competitor deep-dive, which researches with Exa.
+- Cost is tracked per run, about $0.0003 per run on Haiku 5.5.
+
+**Repair**
+- Self-repair in about 8 seconds: diagnose from the error, the failing step's I/O, the last good output, and verified link candidates; patch; re-run old and new tests; promote a new version.
+- Every failure becomes a test: repair adds a `step_succeeds` regression test for the exact break.
+- Public judge Tour with Break, Publish, and Reset controls.
+
+**Steer**
+- English edits ("only posts with 100+ points") produce a new version, re-tested before it replaces the old one.
+- `require_approval` pauses a run until a human approves or rejects.
+- A thumbs-down on a Slack post becomes a proposed fix to the agent.
+- Ask Ops (Cmd+K): chat with the eve Fleet Ops agent; mutating actions need approval.
+
+**Connect**
+- Sign in with Slack: any visitor can connect their workspace, and their agents post to their own channel.
+- Custom connectors anyone can add, over an HTTP API or MCP. Exa, Kernel, Context7, and DeepWiki are connected. A "Build a connector" guide walks through it.
+- GitHub connection for the `github_issues` block.
+- Vercel Sandbox `run_code` block for sandboxed code steps.
+
+**Observe**
+- My agents: health, last output, run strip, sparklines, live activity feed, repairs counted from events.
+- Graph page: Flow view (chains, connectors) and Knowledge view (entities across posts).
+- Fleet knowledge graph: entities are extracted from every post; the `recall` block lets an agent read them.
+- Outbox for every message, delivered or not. Vercel Web Analytics and Speed Insights on the app.
+
+### Blocks
+
+An agent spec (`src/lib/spec.ts`) is a schedule, ordered steps, tests, and a plan card. Steps reference earlier outputs with templates such as `{{steps.page.text}}`. Blocks never throw; they return `{ ok, output | error }`, which is what makes repair possible.
 
 | Block | What it does |
 |---|---|
-| `fetch_url` | Fetch a page and return readable text plus links. Fails on any non-2xx status. |
+| `fetch_url` | Fetch a page, return readable text and links. Fails on non-2xx. |
 | `fetch_rss` | Read an RSS, Atom, or GitHub releases feed. |
-| `hn_search` | Search Hacker News stories via Algolia, with `minPoints` and `sinceHours`. |
+| `hn_search` | Search Hacker News stories via Algolia. |
 | `github_issues` | List open issues, or apply labels and comments. |
-| `llm` | Fast model summarizes or classifies: `text`, `cited_bullets`, or `issue_labels`. Cited bullets may only use URLs present in the input. |
-| `filter` | Keep array items where a field passes `gt`, `gte`, `lt`, `lte`, `eq`, or `contains`. |
-| `diff_with_memory` | Compare input to what the agent saw last run and remember the new state. |
-| `send_slack` | Post to Slack with useful / not useful feedback links; optional `skipIfEmpty`. |
-| `require_approval` | Pause the run until a human approves or rejects the message. |
+| `llm` | Summarize or classify; cited bullets may only use URLs in the input. |
+| `filter` | Keep items where a field passes `gt`, `gte`, `lt`, `lte`, `eq`, or `contains`. |
+| `diff_with_memory` | Compare input to what the agent saw last run, remember the new state. |
+| `recall` | Read entities from the fleet knowledge graph. |
+| `connector` | Call a custom connector (HTTP API or MCP tool). |
+| `run_code` | Run code in a Vercel Sandbox microVM. |
+| `send_slack` | Post to Slack with useful / not useful links; optional `skipIfEmpty`. |
+| `require_approval` | Pause the run until a human approves or rejects. |
 
 ### Test kinds
 
-| Kind | Passes when |
+`nonempty`, `has_citations`, `max_items`, `llm_judge`, `no_post_if_unchanged`, `step_succeeds` (written by repair as the regression test).
+
+## Built with Vercel
+
+| Product | What it does here |
 |---|---|
-| `nonempty` | The final message is non-empty (unless nothing changed). |
-| `has_citations` | Every bullet in the final message has a URL. |
-| `max_items` | The message has at most `config.max` bullets. |
-| `llm_judge` | A fast model judges the final message against `config.rubric`. |
-| `no_post_if_unchanged` | When the diff reports no change, nothing is posted. |
-| `step_succeeds` | `config.stepId` returns ok with non-empty output. Repair writes these as regression tests. |
+| Hosting | Serves the Next.js 16 app and APIs. |
+| Fluid compute | Runs the long AI and workflow requests (build, repair, Ask Ops stream). |
+| Cron | Per-minute tick that claims due agents. |
+| Workflow DevKit | Durable, retryable `runAgent`, `buildAgent`, and `repairAgent`. |
+| AI SDK | Structured generation and tool use for build, revise, repair, edit, and `llm` blocks. |
+| AI Gateway | Model routing: Sonnet 5.5 builds and repairs, Haiku 5.5 runs steps and judges. |
+| Sandbox | Isolated Firecracker microVM for the `run_code` block. |
+| eve | The Fleet Ops agent (its own Vercel project) and the Export as eve agent feature. |
+| BotID | Blocks bots on public AI routes and feedback links. |
+| Web Analytics, Speed Insights | Traffic and Core Web Vitals. |
 
-### Workflows
+Also: Neon Postgres. Local dev uses a `dev` Neon branch; production uses a separate database on the main branch.
 
-All three run on Vercel Workflow DevKit, so each step is durable and retryable.
+## Architecture notes
 
-| Workflow | Trigger | What it does |
-|---|---|---|
-| `runAgent` | Vercel Cron tick (every minute claims due agents), Run now, or `POST /api/agents/:id/run` | Executes the active version step by step, records every step's input and output, runs tests, posts to Slack (or holds for approval), tracks cost. On a failed step it hands off to `repairAgent`. |
-| `buildAgent` | `POST /api/agents` | Request to spec, dry run, tests, and up to 3 revise loops that feed failed tests and step outputs back to the model. The agent reaches `ready` only when tests pass. |
-| `repairAgent` | A failed scheduled run | Diagnoses from the error, the failing step's I/O, the last good output, and verified link candidates. Patches the spec, re-runs old and new tests, and promotes a new version with a `step_succeeds` regression test only if everything passes. Otherwise the agent goes to `needs_human`. |
-
-## What makes it different
-
-- **Test-gated deploys.** No agent goes live, and no edit or repair becomes active, until its tests pass against a real dry run.
-- **Self-repair.** When a source changes under an agent, the factory diagnoses, patches, re-tests, and ships a new version while you are away, then tells you in Slack with a diff.
-- **Every failure becomes a regression test.** A repair adds a test for the exact failure it fixed, so the same break cannot ship twice.
-- **Feedback edits the agent.** A thumbs-down on a Slack post, or an English instruction such as "only posts with 100+ points", produces a new proposed version that is re-tested before it replaces the old one.
-
-## Built with
-
-- Next.js 16 and React 19
-- Vercel Workflow DevKit for durable `runAgent`, `buildAgent`, and `repairAgent`
-- Vercel Cron for the per-minute scheduler tick
-- AI SDK with Vercel AI Gateway: Claude Sonnet 5.5 builds, revises, and repairs; Claude Haiku 5.5 runs `llm` steps and `llm_judge` tests
-- Neon Postgres via `@neondatabase/serverless`, raw SQL, no ORM
-- Zod for the spec schema shared by the builder, runtime, and repair
+- **Specs, not code.** An agent is JSON over a fixed block library. A repair or edit is a diff between two versions, which can be tested, shown, and rolled back.
+- **One runtime.** Dry runs, scheduled runs, Tour runs, and tests all go through the same block runner.
+- **Durable steps.** Each workflow step is retried by Workflow DevKit; step I/O is persisted in Neon, which is the evidence repair works from.
+- **Test-gated delivery.** Build, edit, repair, and every post pass through the agent's tests first. Judge-only failures hold the post.
+- **Chains are data.** An event trigger row says "when agent A posts, run agent B with A's output". Chains are visible on the Graph page.
+- **Raw SQL.** `@neondatabase/serverless`, no ORM; schema in `db/schema.sql`.
 
 ## Setup
 
-Prerequisites: Node 20+, a Vercel account with access to the `agents` team.
+Prerequisites: Node 20+, a Vercel account.
 
 ```bash
 git clone https://github.com/RonKat2008/agent-factory && cd agent-factory
 npm i
-vercel link                 # team: agents, project: agent-factory
+vercel link
 vercel env pull .env.local
 npm run db:migrate
-npm run dev                 # http://localhost:3000
-npm run db:seed             # in a second terminal: seeds the 3 demo agents
+npm run dev                  # http://localhost:3000
+npm run db:seed              # second terminal: the 3 demo agents
 ```
 
-`vercel env pull` supplies `DATABASE_URL` (Neon integration) and a `VERCEL_OIDC_TOKEN` that authenticates AI Gateway locally. Set `DEMO_MODE=true` to run with canned AI replies and no gateway access.
+Then, with the app running (replace `$APP_URL` and use your `ADMIN_KEY`):
+
+```bash
+# add the chained Competitor deep-dive (idempotent)
+curl -X POST "$APP_URL/api/demo/seed-chain?key=$ADMIN_KEY"
+# extract entities from the last 40 posts so the Knowledge graph is not empty
+curl -X POST "$APP_URL/api/knowledge/backfill?key=$ADMIN_KEY"
+```
+
+`vercel env pull` supplies `DATABASE_URL` and a `VERCEL_OIDC_TOKEN` for AI Gateway locally. `DEMO_MODE=true` serves canned AI replies with no gateway access.
 
 | Variable | Purpose |
 |---|---|
-| `DATABASE_URL` | Neon Postgres connection string, from the Vercel Neon integration. |
-| `AI_GATEWAY_API_KEY` | AI Gateway key. Optional locally because the OIDC token from `vercel env pull` works. |
-| `MODEL_SMART` | Gateway model for build, revise, repair, edit. Default `anthropic/claude-sonnet-5.5`. |
-| `MODEL_FAST` | Gateway model for `llm` blocks and `llm_judge`. Default `anthropic/claude-haiku-5.5`. |
+| `DATABASE_URL` | Neon Postgres connection string. |
+| `AI_GATEWAY_API_KEY` | AI Gateway key; optional locally with the OIDC token. |
+| `MODEL_SMART` / `MODEL_FAST` | Gateway models. Defaults `anthropic/claude-sonnet-5.5` and `anthropic/claude-haiku-5.5`. |
 | `CRON_SECRET` | Bearer secret Vercel Cron sends to `/api/cron/tick`. |
-| `ADMIN_KEY` | Key guarding the demo endpoints (`?key=`). |
-| `SLACK_WEBHOOK_URL` | Slack incoming webhook that agent outputs post to. |
-| `GITHUB_TOKEN` | Token for the `github_issues` block. |
-| `APP_URL` | Public base URL, `http://localhost:3000` locally. Used in Slack feedback links. |
-| `DEMO_MODE` | `true` serves canned AI replies from `src/lib/demo.ts`. Default `false`. |
+| `ADMIN_KEY` | Guards admin and demo endpoints (`?key=`) and the admin session. |
+| `APP_URL` | Public base URL, used in Slack feedback links. |
+| `SLACK_CLIENT_ID`, `SLACK_CLIENT_SECRET` | Slack app credentials for Sign in with Slack. |
+| `SLACK_STATE_SECRET` | Signs the OAuth state. |
+| `SLACK_WEBHOOK_URL` | Fallback incoming webhook for the demo fleet. |
+| `GITHUB_TOKEN` | Fallback token for `github_issues`. |
+| `CONNECTIONS_KEY` | Encryption key for stored credentials. |
+| `OPS_URL`, `OPS_API_KEY` | Where the app reaches the Fleet Ops agent, and the bearer key it uses. |
+| `DEMO_MODE` | `true` serves canned AI replies from `src/lib/demo.ts`. |
 
-Other scripts: `npm run verify` (typecheck, lint, build), `npm run preflight`.
+The Fleet Ops agent lives in `ops-agent/` and deploys as its own Vercel project (see `ops-agent/README.md`). Other scripts: `npm run verify` (typecheck, lint, build), `npm run preflight`.
 
-## Demo controls
+## Security notes
 
-The app serves a fake competitor site at `/demo/acme` so repair can be shown on demand. All three endpoints need `?key=$ADMIN_KEY`.
+- Connection credentials (Slack tokens, GitHub tokens, connector keys) are stored encrypted.
+- BotID protects public AI routes and feedback links; public AI routes are also rate limited, with per-key and global windows backed by Postgres.
+- Schedules have a minimum interval and each visitor has a live-agent cap.
+- Admin and demo routes need `ADMIN_KEY`; connection management needs an admin session.
+- The GitHub token is scoped to the connected repo. Outbound fetches go through a guarded network helper.
+- Ask Ops cannot change the fleet without an explicit approval.
 
-```bash
-# Acme "redesigns": changelog moves to /demo/acme/updates, the old URL 404s
-curl -X POST "$APP_URL/api/demo/break?key=$ADMIN_KEY"
+## Docs
 
-# Restore Acme, roll the competitor watcher back to v1, clear its memory
-curl -X POST "$APP_URL/api/demo/reset?key=$ADMIN_KEY"
-
-# Publish the demo state
-curl -X POST "$APP_URL/api/demo/publish?key=$ADMIN_KEY"
-```
-
-Typical sequence: reset, break, click Run now on Competitor watcher, watch the feed go broke, repairing, tests passed, v2 live.
-
-## API
-
-Dashboard reads and factory actions are documented in [`docs/API.md`](docs/API.md). Product plan and demo script: [`docs/SPEC.md`](docs/SPEC.md). Submission text: [`docs/PITCH.md`](docs/PITCH.md).
+[`docs/DEMO.md`](docs/DEMO.md) (3-minute script), [`docs/PITCH.md`](docs/PITCH.md) (Devpost text), [`docs/STATUS.md`](docs/STATUS.md), [`docs/TEAMMATE.md`](docs/TEAMMATE.md), [`docs/SPEC.md`](docs/SPEC.md), [`docs/API.md`](docs/API.md).
 
 ## Team
 
-TBD
+TBD (names and roles to be added before submission).
