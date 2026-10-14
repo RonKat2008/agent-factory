@@ -5,7 +5,9 @@ import { ArrowLeft } from "lucide-react";
 import { getAgent } from "@/lib/api-client";
 import type { AgentDetail } from "@/lib/types";
 import { AgentHeader } from "./agent-header";
-import { RunTimeline } from "./run-timeline";
+import { LatestOutput } from "./latest-output";
+import { RunStrip } from "./run-strip";
+import { RunTimeline, type RunFocus } from "./run-timeline";
 import { SteeringPanel } from "./steering-panel";
 import { VersionHistory } from "./version-history";
 
@@ -44,6 +46,7 @@ function NotFound({ id }: { id: string }) {
 export function AgentDetailView({ id }: { id: string }) {
   const [detail, setDetail] = useState<AgentDetail | null | undefined>(undefined); // undefined = loading
   const [error, setError] = useState<string | null>(null);
+  const [focus, setFocus] = useState<RunFocus>(null);
 
   const load = useCallback(async () => {
     try {
@@ -89,11 +92,13 @@ export function AgentDetailView({ id }: { id: string }) {
           Connection issue ({error}) — showing last known state.
         </p>
       )}
-      <AgentHeader agent={detail.agent} />
+      <AgentHeader agent={detail.agent} versions={detail.versions} onChanged={() => void load()} />
+      <RunStrip runs={detail.runs} onSelect={(runId) => setFocus({ id: runId, nonce: Date.now() })} />
       <div className="grid gap-6 lg:grid-cols-3">
         <div className="flex min-w-0 flex-col gap-6 lg:col-span-2">
-          <VersionHistory agentId={id} versions={detail.versions} onChanged={() => void load()} />
-          <RunTimeline runs={detail.runs} />
+          <LatestOutput runs={detail.runs} agentName={detail.agent.name} />
+          <VersionHistory agentId={id} versions={detail.versions} currentVersion={detail.agent.currentVersion} onChanged={() => void load()} />
+          <RunTimeline runs={detail.runs} focus={focus} />
         </div>
         <div className="min-w-0">
           <SteeringPanel agent={detail.agent} runs={detail.runs} onChanged={() => void load()} />

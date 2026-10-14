@@ -98,12 +98,14 @@ function VersionRow({
   version,
   parent,
   defaultOpen,
+  isActive,
   agentId,
   onChanged,
 }: {
   version: AgentVersion;
   parent: AgentVersion | undefined;
   defaultOpen: boolean;
+  isActive: boolean;
   agentId: string;
   onChanged: () => void;
 }) {
@@ -127,7 +129,18 @@ function VersionRow({
   }
 
   return (
-    <li className={cn("border-l-2 pl-3", factory ? "border-violet-500" : "border-stone-300")}>
+    <li
+      className={cn(
+        "border-l-2 pl-3",
+        factory ? "border-l-violet-500" : "border-l-stone-300",
+        isActive && "relative border border-l-2 border-emerald-300 bg-white py-3 pr-3",
+      )}
+    >
+      {isActive && (
+        <span className="absolute right-0 top-0 rounded-bl-[3px] bg-emerald-600 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-white">
+          active
+        </span>
+      )}
       <div className="flex flex-wrap items-center gap-2">
         <span className="rounded-[3px] bg-stone-900 px-1.5 py-0.5 font-mono text-[12px] tabular-nums text-[#F6F4EF]">
           v{version.version}
@@ -154,7 +167,16 @@ function VersionRow({
         </span>
       </div>
 
-      <p className="mt-2 max-w-2xl text-[15px] font-medium leading-snug text-stone-900">{version.reason}</p>
+      {factory && parent ? (
+        <div className="mt-2 max-w-2xl rounded-[3px] border border-violet-300 bg-violet-50 px-3 py-2">
+          <h3 className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-violet-800">
+            <Wrench className="size-3" aria-hidden /> What the factory changed and why
+          </h3>
+          <p className="mt-1 text-[14px] leading-snug text-violet-950">{version.reason}</p>
+        </div>
+      ) : (
+        <p className="mt-2 max-w-2xl text-[15px] font-medium leading-snug text-stone-900">{version.reason}</p>
+      )}
 
       {version.status === "proposed" && (
         <div className="mt-2 flex gap-2">
@@ -193,13 +215,34 @@ function VersionRow({
 export function VersionHistory({
   agentId,
   versions,
+  currentVersion,
   onChanged,
 }: {
   agentId: string;
   versions: AgentVersion[];
+  currentVersion: number | null;
   onChanged: () => void;
 }) {
-  const heroVersion = versions.find((v) => v.createdBy === "factory" && v.parentVersion != null)?.version;
+  const [showRejected, setShowRejected] = useState(false);
+  const sorted = useMemo(() => [...versions].sort((a, b) => b.version - a.version), [versions]);
+  const kept = sorted.filter((v) => v.status !== "rejected");
+  const rejected = sorted.filter((v) => v.status === "rejected");
+  const heroVersion = kept.find(
+    (v) => v.createdBy === "factory" && v.parentVersion != null && (v.status === "active" || v.version === currentVersion),
+  )?.version;
+
+  const row = (v: AgentVersion) => (
+    <VersionRow
+      key={v.version}
+      version={v}
+      parent={versions.find((p) => p.version === v.parentVersion)}
+      defaultOpen={v.version === heroVersion}
+      isActive={v.version === currentVersion}
+      agentId={agentId}
+      onChanged={onChanged}
+    />
+  );
+
   return (
     <section className={cn(PANEL, "p-4")} aria-label="Version history">
       <h2 className={cn(LABEL, "mb-3")}>Version history</h2>
@@ -207,16 +250,23 @@ export function VersionHistory({
         <p className="text-[13px] text-stone-500">No versions yet.</p>
       ) : (
         <ol className="flex flex-col gap-6">
-          {versions.map((v) => (
-            <VersionRow
-              key={v.version}
-              version={v}
-              parent={versions.find((p) => p.version === v.parentVersion)}
-              defaultOpen={v.version === heroVersion}
-              agentId={agentId}
-              onChanged={onChanged}
-            />
-          ))}
+          {kept.map(row)}
+          {rejected.length > 0 && (
+            <li className="opacity-70">
+              <button
+                onClick={() => setShowRejected((o) => !o)}
+                aria-expanded={showRejected}
+                className="inline-flex items-center gap-1.5 rounded-[3px] border border-dashed border-stone-300 px-2 py-1 font-mono text-[11px] text-stone-500 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/40"
+              >
+                <ChevronRight className={cn("size-3.5 transition-transform", showRejected && "rotate-90")} aria-hidden />
+                {rejected.length} rejected attempt{rejected.length === 1 ? "" : "s"}
+                <span className="text-stone-400">
+                  ({rejected.map((v) => `v${v.version}`).join(", ")})
+                </span>
+              </button>
+              {showRejected && <ol className="mt-4 flex flex-col gap-6">{rejected.map(row)}</ol>}
+            </li>
+          )}
         </ol>
       )}
     </section>

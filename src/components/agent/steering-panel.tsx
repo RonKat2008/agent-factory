@@ -1,9 +1,9 @@
 "use client";
 import { useState } from "react";
-import { AlertTriangle, Loader2, Pause, Play, Sparkles, Zap } from "lucide-react";
+import { AlertTriangle, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { track } from "@vercel/analytics";
-import { approveRun, editAgent, runNow, setApproval, setPaused } from "@/lib/api-client";
+import { approveRun, editAgent, setApproval } from "@/lib/api-client";
 import type { Agent, Run } from "@/lib/types";
 import { cn } from "@/lib/utils";
 import { AgentEvents } from "./agent-events";
@@ -15,7 +15,6 @@ export function SteeringPanel({ agent, runs, onChanged }: { agent: Agent; runs: 
   const [instruction, setInstruction] = useState("");
   const [busy, setBusy] = useState<string | null>(null);
   const awaiting = runs.find((r) => r.status === "awaiting_approval");
-  const paused = agent.status === "paused";
 
   async function act<T>(key: string, fn: () => Promise<T>, ok: (r: T) => string) {
     setBusy(key);
@@ -43,7 +42,7 @@ export function SteeringPanel({ agent, runs, onChanged }: { agent: Agent; runs: 
   }
 
   return (
-    <aside className="flex flex-col gap-4 lg:sticky lg:top-4 lg:self-start">
+    <aside className="flex flex-col gap-5 lg:sticky lg:top-4 lg:self-start">
       {awaiting && (
         <section className="rounded-[3px] border border-amber-400 bg-amber-50 p-3" aria-label="Approval needed">
           <h2 className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-amber-800">
@@ -71,8 +70,13 @@ export function SteeringPanel({ agent, runs, onChanged }: { agent: Agent; runs: 
         </section>
       )}
 
-      <section className={cn(PANEL, "flex flex-col gap-3 p-3")} aria-label="Steer this agent">
-        <h2 className={LABEL}>Edit in plain English</h2>
+      <section className={cn(PANEL, "flex flex-col gap-3.5 p-4")} aria-label="Steer this agent">
+        <div className="flex flex-col gap-1">
+          <h2 className={LABEL}>Edit in plain English</h2>
+          <p className="text-[12px] leading-snug text-stone-500">
+            Creates a new version. It goes live only if every test passes.
+          </p>
+        </div>
         <textarea
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
@@ -85,33 +89,7 @@ export function SteeringPanel({ agent, runs, onChanged }: { agent: Agent; runs: 
           {busy === "edit" ? "Applying…" : "Apply edit"}
         </button>
 
-        <div className="flex gap-2 border-t border-stone-200 pt-3">
-          <button
-            className={cn(BTN_SECONDARY, "flex-1")}
-            disabled={busy !== null || agent.currentVersion == null}
-            onClick={() => act("run", () => runNow(agent.id).then((r) => (track("run_now"), r)), () => "Run started")}
-          >
-            {busy === "run" ? <Loader2 className="size-3.5 animate-spin" /> : <Zap className="size-3.5" />} Run now
-          </button>
-          <button
-            className={cn(BTN_SECONDARY, "flex-1")}
-            disabled={busy !== null}
-            onClick={() =>
-              act("pause", () => setPaused(agent.id, !paused), () => (paused ? "Agent resumed" : "Agent paused"))
-            }
-          >
-            {busy === "pause" ? (
-              <Loader2 className="size-3.5 animate-spin" />
-            ) : paused ? (
-              <Play className="size-3.5" />
-            ) : (
-              <Pause className="size-3.5" />
-            )}
-            {paused ? "Resume" : "Pause"}
-          </button>
-        </div>
-
-        <label className="flex cursor-pointer items-center justify-between gap-3 text-[13px] text-stone-900">
+        <label className="flex cursor-pointer items-center justify-between gap-3 border-t border-stone-200 pt-3 text-[13px] text-stone-900">
           Require approval before sending
           <button
             type="button"

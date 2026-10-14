@@ -30,7 +30,7 @@ export function EveExport({ agentId }: { agentId: string }) {
         <a
           href={base}
           download
-          className="inline-flex items-center gap-2 rounded-[3px] border border-stone-300 bg-[#FBFAF7] px-3 py-1.5 text-[13px] text-stone-900 hover:bg-stone-100"
+          className="inline-flex h-8 items-center gap-2 rounded-[3px] border border-stone-300 bg-[#FBFAF7] px-3 text-[13px] text-stone-900 hover:bg-stone-100"
         >
           <Download className="size-3.5" aria-hidden />
           Export as eve agent

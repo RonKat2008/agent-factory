@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { CheckCircle2, ChevronRight, Clock, Loader2, XCircle } from "lucide-react";
 import type { Run, RunStatus, StepRun } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -129,18 +129,27 @@ function RunDetail({ run }: { run: Run }) {
   );
 }
 
-function RunRow({ run }: { run: Run }) {
-  const [open, setOpen] = useState(false);
+function RunRow({ run, open, onToggle }: { run: Run; open: boolean; onToggle: () => void }) {
   return (
-    <li className="border-b border-stone-200 last:border-b-0">
+    <li id={`run-${run.id}`} className="scroll-mt-4 border-b border-stone-200 last:border-b-0">
       <button
-        onClick={() => setOpen((o) => !o)}
+        onClick={onToggle}
         aria-expanded={open}
-        className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-stone-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-900/40"
+        className={cn(
+          "flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-stone-100/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-900/40",
+          open && "bg-stone-100/70",
+        )}
       >
         <ChevronRight className={cn("size-3.5 shrink-0 text-stone-400 transition-transform", open && "rotate-90")} aria-hidden />
         <StatusIcon status={run.status} />
-        <span className="rounded-[3px] border border-stone-300 bg-stone-100 px-1.5 py-0.5 font-mono text-[11px] text-stone-700">
+        <span
+          className={cn(
+            "rounded-[3px] border px-1.5 py-0.5 font-mono text-[11px]",
+            run.kind === "repair_test"
+              ? "border-violet-300 bg-violet-50 text-violet-800"
+              : "border-stone-300 bg-stone-100 text-stone-700",
+          )}
+        >
           {run.kind}
         </span>
         <span className="font-mono text-[12px] tabular-nums text-stone-600">v{run.version}</span>
@@ -155,7 +164,35 @@ function RunRow({ run }: { run: Run }) {
   );
 }
 
-export function RunTimeline({ runs }: { runs: Run[] }) {
+export type RunFocus = { id: string; nonce: number } | null;
+
+export function RunTimeline({ runs, focus }: { runs: Run[]; focus: RunFocus }) {
+  const [openIds, setOpenIds] = useState<ReadonlySet<string>>(new Set());
+
+  // Opens and scrolls to a run when the run strip is clicked.
+  useEffect(() => {
+    if (!focus) return;
+    const t = setTimeout(() => {
+      setOpenIds((prev) => new Set(prev).add(focus.id));
+      // Wait a frame so the row has expanded before measuring its position.
+      requestAnimationFrame(() => {
+        const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        document
+          .getElementById(`run-${focus.id}`)
+          ?.scrollIntoView({ behavior: reduce ? "auto" : "smooth", block: "center" });
+      });
+    }, 0);
+    return () => clearTimeout(t);
+  }, [focus]);
+
+  const toggle = (id: string) =>
+    setOpenIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+
   return (
     <section className={PANEL} aria-label="Run timeline">
       <h2 className={cn(LABEL, "border-b border-stone-300 px-3 py-2.5")}>Run timeline</h2>
@@ -164,7 +201,7 @@ export function RunTimeline({ runs }: { runs: Run[] }) {
       ) : (
         <ul>
           {runs.map((r) => (
-            <RunRow key={r.id} run={r} />
+            <RunRow key={r.id} run={r} open={openIds.has(r.id)} onToggle={() => toggle(r.id)} />
           ))}
         </ul>
       )}
