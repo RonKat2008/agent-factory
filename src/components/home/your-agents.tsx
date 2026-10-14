@@ -9,15 +9,16 @@ import { relTime, fullTime } from "@/components/time";
 import { humanSchedule } from "@/components/create/schedule";
 import { STATUS_WORDS, plainPreview } from "@/components/create/plain";
 import { cn } from "@/lib/utils";
+import { Stagger, StaggerItem } from "@/components/motion";
 
 const POLL_MS = 5000;
-const MAX_ROWS = 12;
+const MAX_ROWS = 5;
 
 function AgentLine({ agent }: { agent: Agent }) {
   const s = STATUS_WORDS[agent.status];
   const last = agent.lastOutput;
   return (
-    <li>
+    <StaggerItem as="li">
       <Link
         href={`/agents/${agent.id}`}
         className="group grid grid-cols-[1fr_auto] items-start gap-x-4 gap-y-1 px-4 py-3.5 transition-colors hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-600/60 sm:grid-cols-[minmax(0,1.1fr)_minmax(0,1.6fr)_auto]"
@@ -47,7 +48,7 @@ function AgentLine({ agent }: { agent: Agent }) {
         </p>
         <ChevronRight className="col-start-2 row-start-1 mt-1 size-4 sm:col-start-3 text-stone-400 transition-transform group-hover:translate-x-0.5 group-hover:text-stone-900" aria-hidden />
       </Link>
-    </li>
+    </StaggerItem>
   );
 }
 
@@ -86,7 +87,7 @@ export function YourAgents() {
           Your agents
         </h2>
         <Link href="/fleet" className="text-[13px] text-stone-600 underline-offset-2 hover:text-stone-900 hover:underline">
-          Open the fleet dashboard
+          See all in My agents
         </Link>
       </div>
       {error && !agents && (
@@ -105,13 +106,13 @@ export function YourAgents() {
             ))}
           </ul>
         ) : shown.length === 0 ? (
-          <p className="px-4 py-6 text-[14px] text-stone-600">No agents yet. Pick an example above to build your first one.</p>
+          <p className="px-4 py-6 text-[14px] text-stone-600">No agents yet. Describe a job above, or pick an example, to build your first one.</p>
         ) : (
-          <ul className="divide-y divide-stone-200">
+          <Stagger as="ul" gap="tight" className="divide-y divide-stone-200">
             {shown.map((a) => (
               <AgentLine key={a.id} agent={a} />
             ))}
-          </ul>
+          </Stagger>
         )}
       </div>
       {agents && agents.length > MAX_ROWS && (

@@ -4,19 +4,21 @@ import type { ReactNode } from "react";
 import { BookOpen, Clock, MessageSquare, PenLine } from "lucide-react";
 import type { AgentSpec, PlanCard } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Term } from "@/components/explain";
+import { Stagger, StaggerItem } from "@/components/motion";
 import { SchedulePicker } from "./schedule-picker";
 import { type SchedulePick, humanSchedule } from "./schedule";
 import { sourcesFromSpec } from "./plain";
 
-function Card({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+function Card({ icon, title, children }: { icon: ReactNode; title: ReactNode; children: ReactNode }) {
   return (
-    <section className="rounded-[6px] border border-stone-300 bg-[#FBFAF7] p-4 sm:p-5">
+    <StaggerItem as="section" className="rounded-[6px] border border-stone-300 bg-[#FBFAF7] p-4 shadow-[0_1px_0_rgba(0,0,0,0.04)] sm:p-5">
       <h3 className="flex items-center gap-2 text-[15px] font-semibold text-stone-900">
         <span className="grid size-7 place-items-center rounded-full bg-violet-100 text-violet-800">{icon}</span>
-        {title}
+        <span>{title}</span>
       </h3>
       <div className="mt-3 text-[15px] leading-relaxed text-stone-800">{children}</div>
-    </section>
+    </StaggerItem>
   );
 }
 
@@ -40,8 +42,8 @@ type Props = {
 export function PlanStep({ plan, spec, pick, onPick, canEdit }: Props) {
   const sources = spec ? sourcesFromSpec(spec) : [];
   return (
-    <div className="grid gap-3 md:grid-cols-2">
-      <Card icon={<Clock className="size-3.5" aria-hidden />} title="When">
+    <Stagger gap="normal" className="grid gap-3 sm:grid-cols-2">
+      <Card icon={<Clock className="size-3.5" aria-hidden />} title={<>When it <Term id="run">runs</Term></>}>
         {!spec && !plan ? (
           <Lines />
         ) : pick && canEdit ? (
@@ -85,20 +87,24 @@ export function PlanStep({ plan, spec, pick, onPick, canEdit }: Props) {
           <Lines />
         )}
       </Card>
-      <Card icon={<PenLine className="size-3.5" aria-hidden />} title="What it writes">
+      <Card icon={<PenLine className="size-3.5" aria-hidden />} title="What it does">
         {plan ? <p>{plan.does}</p> : <Lines />}
       </Card>
-      <Card icon={<MessageSquare className="size-3.5" aria-hidden />} title="Where it sends">
+      <Card icon={<MessageSquare className="size-3.5" aria-hidden />} title="Where it posts">
         {plan ? (
           <>
             <p>{plan.sendsTo}</p>
-            {spec?.requiresApproval && <p className="mt-1 text-[13px] text-amber-800">Asks you first: {plan.asksBefore}</p>}
+            {spec?.requiresApproval && (
+              <p className="mt-1 text-[13px] text-amber-800">
+                <Term id="approval">Asks you before</Term> posting: {plan.asksBefore}
+              </p>
+            )}
             <p className="mt-1 text-[13px] text-stone-500">You can pick your own Slack channel on the next step.</p>
           </>
         ) : (
           <Lines />
         )}
       </Card>
-    </div>
+    </Stagger>
   );
 }

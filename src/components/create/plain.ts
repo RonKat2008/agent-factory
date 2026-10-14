@@ -46,8 +46,17 @@ export function sourcesFromSpec(spec: AgentSpec): Source[] {
   return out;
 }
 
+/** "has_citations: 2 of 5 bullets have no source URL" → "2 of 5 bullets have no source URL". */
+export function failLine(message: string): string {
+  return message.replace(/^[a-z_]+:\s*/i, "").trim();
+}
+
 export function fixLine(message: string): string {
-  const summary = message.replace(/;?\s*v\d+ written\.?$/i, "").trim();
+  const summary = message
+    .replace(/;?\s*v\d+ written\.?$/i, "")
+    .replace(/^↻\s*/, "")
+    .trim()
+    .replace(/\.$/, "");
   return `Fixed: ${summary} and re-tested ✓`;
 }
 
