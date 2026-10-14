@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Hackathon starter",
-  description: "Next.js + Supabase + Claude starter",
+  description: "Agent Factory",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

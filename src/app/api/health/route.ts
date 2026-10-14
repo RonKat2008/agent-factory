@@ -2,6 +2,6 @@ import { getHealth } from "@/lib/health";
 
 export const dynamic = "force-dynamic";
 
-export function GET() {
-  return Response.json(getHealth());
+export async function GET() {
+  return Response.json(await getHealth());
 }

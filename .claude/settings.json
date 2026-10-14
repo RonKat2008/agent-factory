@@ -11,9 +11,6 @@
       "Bash(npm install *)",
       "Bash(npm i *)",
       "Bash(npx shadcn@latest *)",
-      "Bash(npx supabase migration *)",
-      "Bash(npx supabase gen *)",
-      "Bash(npx supabase status*)",
       "Bash(git status*)",
       "Bash(git diff*)",
       "Bash(git log*)",
@@ -27,25 +24,22 @@
       "Bash(vercel env ls*)",
       "Bash(vercel logs *)",
       "Bash(curl -s http://localhost*)",
-      "Bash(date*)"
+      "Bash(date*)",
+      "Bash(npm run db:*)"
     ],
     "deny": [
       "Bash(git push --force*)",
       "Bash(git push -f*)",
-      "Bash(npx supabase db reset --linked*)",
-      "Bash(supabase db reset --linked*)",
       "Bash(vercel remove*)",
       "Bash(vercel project rm*)"
     ],
     "ask": [
-      "Bash(npx supabase db push*)",
       "Bash(vercel deploy --prod*)",
       "Bash(vercel env add *)",
       "Bash(git push*)"
     ]
   },
   "enabledPlugins": {
-    "supabase@claude-plugins-official": true,
     "vercel@claude-plugins-official": true,
     "exa@claude-plugins-official": true,
     "agent-sdk-dev@claude-plugins-official": true

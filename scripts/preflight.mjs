@@ -1,14 +1,10 @@
 #!/usr/bin/env node
-// Hackathon readiness check: env vars, Supabase link, Vercel link, then `npm run verify`.
+// Hackathon readiness check: env vars, Vercel link, then `npm run verify`.
 // Usage: npm run preflight [-- --skip-verify]
 import { existsSync, readFileSync } from "node:fs";
 import { execSync } from "node:child_process";
 
-const REQUIRED_ENV = [
-  "NEXT_PUBLIC_SUPABASE_URL",
-  "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-  "ANTHROPIC_API_KEY",
-];
+const REQUIRED_ENV = ["DATABASE_URL", "CRON_SECRET", "ADMIN_KEY"];
 const ENV_FILE = ".env.local";
 
 function readEnvKeys(path) {
@@ -39,11 +35,6 @@ const checks = [
     ok: envKeys.has(key) || Boolean(process.env[key]),
     fix: `add ${key} to ${ENV_FILE}`,
   })),
-  {
-    name: "Supabase project linked",
-    ok: existsSync("supabase/.temp/project-ref"),
-    fix: "npx supabase login && npx supabase link --project-ref <ref>",
-  },
   { name: "Vercel CLI installed", ok: commandWorks("vercel --version"), fix: "npm i -g vercel" },
   { name: "Vercel project linked", ok: existsSync(".vercel/project.json"), fix: "vercel link" },
 ];

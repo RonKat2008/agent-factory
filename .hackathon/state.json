@@ -4,16 +4,20 @@
   "event": "Vercel Fast Forward (Agents & Factories)",
   "startedAt": "2026-10-14T11:24:10-07:00",
   "deadline": "2026-10-14T16:00:00-07:00",
-  "stage": "kickoff",
+  "stage": "foundation",
   "stageHistory": [
     {
       "stage": "kickoff",
       "enteredAt": "2026-10-14T11:24:10-07:00"
+    },
+    {
+      "stage": "foundation",
+      "enteredAt": "2026-10-14T11:28:24-07:00"
     }
   ],
   "gates": {
     "idea-picked": null,
-    "spec-approved": null,
+    "spec-approved": "2026-10-14T11:28:24-07:00",
     "skeleton-deployed": null,
     "feature-freeze": null,
     "submitted": null
