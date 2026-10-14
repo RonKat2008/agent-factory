@@ -309,6 +309,11 @@ export async function afterLiveRun(agentId: string, result: ExecResult): Promise
   }
   if (result.status === "failed") {
     const why = describeFailure(result.stepError, result.failedTests) ?? "Run failed";
+    if (agent.status !== "live") {
+      // Paused / ready / other: a failed manual run must not un-pause or auto-repair the agent.
+      await logEvent(agentId, "run_failed", why, { runId: result.runId, stepError: result.stepError });
+      return;
+    }
     await updateAgent(agentId, { status: "broken" });
     await logEvent(agentId, "broke", why, {
       runId: result.runId,

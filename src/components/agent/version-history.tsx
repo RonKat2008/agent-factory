@@ -117,7 +117,7 @@ function VersionRow({
       if (kind === "accept") await acceptVersion(agentId, version.version);
       else await rejectVersion(agentId, version.version);
       if (kind === "accept") track("version_accepted");
-      toast.success(kind === "accept" ? `v${version.version} accepted` : `v${version.version} rejected`);
+      toast.success(kind === "accept" ? `Testing v${version.version}…` : `v${version.version} rejected`);
       onChanged();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed");

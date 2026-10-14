@@ -11,7 +11,9 @@ export function POST(_req: Request, ctx: { params: Promise<{ id: string }> }): P
     if (!UUID_RE.test(id)) return jsonError("invalid id", 400);
     const agent = await getAgent(id);
     if (!agent) return jsonError("not found", 404);
-    if (agent.status === "building" || agent.status === "testing") return jsonError(`agent is ${agent.status}`, 409);
+    if (agent.status === "repairing" || agent.status === "building" || agent.status === "testing") {
+      return jsonError("Agent is being repaired — try again in a few seconds", 409);
+    }
     const limited = await rateLimit("run", { key: id, perKey: { max: 1, windowSec: 10 }, global: { max: 60, windowSec: 3600 } });
     if (limited) return limited;
     const runId = await startAgentRun(id, "manual");

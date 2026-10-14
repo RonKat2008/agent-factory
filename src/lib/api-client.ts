@@ -61,7 +61,7 @@ export const setApproval = (id: string, requiresApproval: boolean) =>
 export const editAgent = (id: string, instruction: string) =>
   post<{ version: number }>(`/api/agents/${id}/edit`, { instruction });
 export const acceptVersion = (id: string, v: number) =>
-  post<{ agent: Agent }>(`/api/agents/${id}/versions/${v}/accept`);
+  post<{ accepted: "testing" }>(`/api/agents/${id}/versions/${v}/accept`);
 export const rejectVersion = (id: string, v: number) =>
   post<{ ok: true }>(`/api/agents/${id}/versions/${v}/reject`);
 export const approveRun = (runId: string, approve: boolean) =>

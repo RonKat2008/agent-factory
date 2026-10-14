@@ -1,7 +1,8 @@
-import { UUID_RE, guard, json, jsonError } from "@/lib/api-util";
-import { activateVersion, dryRunOutcome, logEdited } from "@/lib/factory/pipeline";
-import { getAgent, getVersion } from "@/lib/repo";
+import { start } from "workflow/api";
+import { UUID_RE, guard, jsonError } from "@/lib/api-util";
+import { getVersion, logEvent } from "@/lib/repo";
 import { rateLimit } from "@/lib/rate-limit";
+import { editAgentWorkflow } from "@/workflows/edit-agent";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -16,10 +17,10 @@ export function POST(_req: Request, ctx: { params: Promise<{ id: string; v: stri
     if (version.status !== "proposed") return jsonError(`version is ${version.status}, not proposed`, 409);
     const limited = await rateLimit("accept", { global: { max: 30, windowSec: 3600 } });
     if (limited) return limited;
-    const out = await dryRunOutcome(id, version.spec);
-    if (!out.passed) return jsonError(out.failures.join("; ") || "tests failed", 409);
-    await activateVersion(id, num, version.spec);
-    await logEdited(id, num, version.reason.replace(/^(user edit|feedback): /, ""), out);
-    return json({ agent: await getAgent(id) });
+    const summary = version.reason.replace(/^(user edit|feedback): /, "");
+    await logEvent(id, "proposed", `Testing v${num} before activating…`, { version: num });
+    // Dry run + activation (or rejection) happen durably in the workflow, so the click can't 504.
+    await start(editAgentWorkflow, [{ agentId: id, version: num, changeSummary: summary, autoActivate: true }]);
+    return Response.json({ accepted: "testing" }, { status: 202, headers: { "Cache-Control": "no-store" } });
   });
 }

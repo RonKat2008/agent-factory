@@ -20,7 +20,7 @@ async function postToSlack(text: string): Promise<{ ok: boolean; error?: string 
     const res = await fetch(webhook, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, unfurl_links: false, unfurl_media: false }),
       signal: AbortSignal.timeout(SLACK_TIMEOUT_MS),
     });
     return res.ok ? { ok: true } : { ok: false, error: `Slack returned ${res.status}` };

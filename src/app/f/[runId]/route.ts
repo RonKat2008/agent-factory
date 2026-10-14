@@ -43,11 +43,19 @@ document.getElementById("f").addEventListener("submit", async function (e) {
 </script>`;
 }
 
+const BOT_UA_RE = /slackbot|slack-imgproxy|facebookexternalhit|twitterbot|linkedinbot|discordbot|whatsapp|telegrambot|googlebot|bingbot|bot|crawler|preview|spider/i;
+
 export async function GET(request: Request, ctx: { params: Promise<{ runId: string }> }): Promise<Response> {
   const { runId } = await ctx.params;
   const r = new URL(request.url).searchParams.get("r");
   if (!UUID_RE.test(runId) || (r !== "useful" && r !== "not_useful")) {
     return page("Invalid link", "<h1>That link doesn't look right</h1><p>It may have been cut off when copying.</p>", 400);
+  }
+  if (BOT_UA_RE.test(request.headers.get("user-agent") ?? "")) {
+    // Link-preview / crawler fetches must not count as feedback.
+    return r === "useful"
+      ? page("Thanks", "<h1>Mark as useful</h1><p>Open this link in a browser to record your rating.</p>")
+      : page("Thanks", "<h1>Mark as not useful</h1><p>Open this link in a browser to record your rating.</p>");
   }
   try {
     const res = await insertFeedback({ runId, rating: r });

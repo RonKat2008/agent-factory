@@ -3,6 +3,7 @@ import { start } from "workflow/api";
 import { z } from "zod";
 import { createAgent, listAgents, logEvent, updateAgent } from "@/lib/repo";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
+import { blockBots } from "@/lib/bot-guard";
 import { buildAgentWorkflow } from "@/workflows/build-agent";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,8 @@ const DEFAULT_SCHEDULE = "0 16 * * *";
 
 export function POST(req: Request): Promise<Response> {
   return guard("POST /api/agents", async () => {
+    const bot = await blockBots();
+    if (bot) return bot;
     const parsed = BodySchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) return jsonError("request must be 8-600 characters", 400);
     const { request } = parsed.data;
