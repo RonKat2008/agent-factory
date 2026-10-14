@@ -2,6 +2,7 @@ import { Wrench } from "lucide-react";
 import { StatusPill } from "@/components/status-pill";
 import type { Agent } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { EveExport } from "./eve-export";
 import { LABEL, fullTime, relTime, usd } from "./format";
 
 function Stat({ label, children, tone }: { label: string; children: React.ReactNode; tone?: string }) {
@@ -27,6 +28,7 @@ export function AgentHeader({ agent }: { agent: Agent }) {
         )}
       </div>
       <p className="max-w-3xl text-[14px] italic text-stone-500">&ldquo;{agent.request}&rdquo;</p>
+      <EveExport agentId={agent.id} />
       <div className="grid grid-cols-2 gap-x-6 gap-y-4 border-y border-stone-300 py-3 sm:grid-cols-3 lg:grid-cols-5">
         <div className="flex min-w-0 flex-col gap-1">
           <span className={LABEL}>Schedule</span>
