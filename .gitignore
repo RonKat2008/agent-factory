@@ -41,3 +41,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 /.swc
+
+# ops-agent (Fleet Ops eve service)
+ops-agent/node_modules
+ops-agent/.vercel
