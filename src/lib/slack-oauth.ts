@@ -28,8 +28,29 @@ export function appBaseUrl(fallbackOrigin: string): string {
   return (process.env.APP_URL || fallbackOrigin).replace(/\/$/, "");
 }
 
-export function redirectUri(fallbackOrigin: string): string {
-  return `${appBaseUrl(fallbackOrigin)}/api/slack/oauth/callback`;
+/** Hosts the OAuth round-trip may return to (each must also be registered in the Slack app). */
+const ALLOWED_OAUTH_HOSTS = new Set(
+  ["pitcrew-ai.vercel.app", "agent-factory-steel.vercel.app", ...(process.env.SLACK_REDIRECT_HOSTS ?? "").split(",")]
+    .map((h) => h.trim())
+    .filter(Boolean),
+);
+
+/**
+ * Return to the same origin the flow started on, so the visitor cookie bound into `state`
+ * is present at the callback. Falls back to APP_URL for unknown hosts.
+ */
+export function oauthBaseUrl(requestOrigin: string): string {
+  try {
+    const u = new URL(requestOrigin);
+    if (u.protocol === "https:" && ALLOWED_OAUTH_HOSTS.has(u.host)) return u.origin;
+  } catch {
+    // fall through to APP_URL
+  }
+  return appBaseUrl(requestOrigin);
+}
+
+export function redirectUri(requestOrigin: string): string {
+  return `${oauthBaseUrl(requestOrigin)}/api/slack/oauth/callback`;
 }
 
 /** Only same-site relative paths ("/x", never "//x" or "/\\x"); anything else becomes "/connections". */
