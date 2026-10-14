@@ -17,6 +17,7 @@ import { FOCUS } from "@/components/ui-tokens";
 import { RunStrip } from "./run-strip";
 import { latestRepairAt } from "./run-history";
 import { agentIcon, planLine } from "./agent-icon";
+import { ChainChip } from "./chain-chip";
 import { AgentStatusLine } from "./agent-status-line";
 
 const EDGE: Record<AgentStatus, string> = {
@@ -140,6 +141,7 @@ export function AgentCard({ agent: a, now }: { agent: Agent; now: number }) {
           <StatusMorph status={a.status} />
           <AgentStatusLine agent={a} now={now} />
         </div>
+        <ChainChip chains={a.chains} />
 
         <SlackBubble agent={a} now={now} />
 

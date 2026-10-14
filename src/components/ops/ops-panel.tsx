@@ -94,7 +94,7 @@ export function OpsPanel({ open, onClose, items, status, agents, mac, onSend, on
       <div onClick={onClose} aria-hidden className={cn("fixed inset-0 z-40 bg-stone-900/25 transition-opacity duration-200 motion-reduce:transition-none", open ? "opacity-100" : "pointer-events-none opacity-0")} />
       <motion.aside ref={panelRef} role="dialog" aria-modal="true" aria-label="Ask Ops" aria-hidden={!open} inert={!open}
         initial={false}
-        animate={open ? { x: 0, opacity: 1 } : { x: 24, opacity: 0 }}
+        animate={open ? { x: 0, opacity: 1 } : { x: "100%", opacity: 0 }}
         transition={SPRING.gentle}
         className={cn("fixed inset-y-0 right-0 z-50 flex w-[min(560px,100vw)] flex-col border-l border-stone-400 bg-[#FBFAF7] shadow-[-8px_0_24px_rgba(28,25,23,0.10)]", !open && "pointer-events-none")}>
         <header className="flex shrink-0 items-center gap-3 border-b border-stone-300 bg-[#FBFAF7] px-4 py-3">

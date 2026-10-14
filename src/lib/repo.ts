@@ -1,6 +1,7 @@
 // Persistence layer: every SQL statement in the app lives here. Parameterized only.
 import cronstrue from "cronstrue";
 import { query } from "./db";
+import { listTriggers } from "./repo-triggers";
 import type {
   Agent,
   AgentDetail,
@@ -178,14 +179,30 @@ async function loadAgentActivity(): Promise<{
   return { recent, last };
 }
 
+function buildChains(
+  id: string,
+  edges: { fromAgentId: string; toAgentId: string }[],
+  names: Map<string, string>,
+): NonNullable<Agent["chains"]> {
+  const ref = (rid: string) => ({ id: rid, name: names.get(rid) ?? "another agent" });
+  const up = edges.find((e) => e.toAgentId === id && names.has(e.fromAgentId));
+  return {
+    triggers: edges.filter((e) => e.fromAgentId === id && names.has(e.toAgentId)).map((e) => ref(e.toAgentId)),
+    triggeredBy: up ? ref(up.fromAgentId) : null,
+  };
+}
+
 export async function listAgents(): Promise<Agent[]> {
-  const [rows, activity] = await Promise.all([
+  const [rows, activity, edges] = await Promise.all([
     query<Row>(`${AGENT_SELECT} order by a.created_at asc`),
     loadAgentActivity(),
+    listTriggers().catch(() => []),
   ]);
+  const names = new Map(rows.map((r) => [String(r.id), String(r.name)]));
   return rows.map((r) => {
     const id = String(r.id);
-    return { ...mapAgent(r), recent: activity.recent.get(id) ?? [], lastOutput: activity.last.get(id) ?? null };
+    const chains = buildChains(id, edges, names);
+    return { ...mapAgent(r), recent: activity.recent.get(id) ?? [], lastOutput: activity.last.get(id) ?? null, chains };
   });
 }
 
@@ -274,12 +291,16 @@ export async function getRun(id: string): Promise<Run | null> {
 }
 
 export async function getAgentDetail(id: string): Promise<AgentDetail | null> {
-  const agent = await getAgent(id);
-  if (!agent) return null;
-  const [versionRows, runRows] = await Promise.all([
+  const base = await getAgent(id);
+  if (!base) return null;
+  const [versionRows, runRows, edges, nameRows] = await Promise.all([
     query<Row>(`select * from agent_versions where agent_id = $1 order by version desc`, [id]),
     query<Row>(`select ${RUN_COLS} from runs r where r.agent_id = $1 order by r.started_at desc limit 30`, [id]),
+    listTriggers().catch(() => []),
+    query<Row>(`select id, name from agents`),
   ]);
+  const names = new Map(nameRows.map((r) => [String(r.id), String(r.name)]));
+  const agent = { ...base, chains: buildChains(id, edges, names) };
   return { agent, versions: versionRows.map(mapVersion), runs: await hydrateRuns(runRows) };
 }
 
@@ -334,7 +355,7 @@ export async function listEvents(opts: { since?: string; agentId?: string; limit
 export async function getStats(): Promise<Stats> {
   const rows = await query<Row>(
     `select
-       (select count(*)::int from agents where status = 'live') as live,
+       (select count(*)::int from agents where status in ('live','repairing')) as live,
        (select count(*)::int from runs where kind in ${NON_DRY}
           and started_at >= (date_trunc('day', now() at time zone 'America/Los_Angeles') at time zone 'America/Los_Angeles')) as today,
        (select count(*)::int from events where type = 'repaired') as repairs,

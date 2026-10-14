@@ -34,6 +34,8 @@ export type Agent = {
   recent?: { status: RunStatus; kind: RunKind; startedAt: string; costUsd: number; ms: number | null }[];
   /** Latest successfully posted message (listAgents only). */
   lastOutput?: { message: string; at: string } | null;
+  /** Trigger chain links to other agents. */
+  chains?: { triggers: { id: string; name: string }[]; triggeredBy: { id: string; name: string } | null };
 };
 
 export type EventType =

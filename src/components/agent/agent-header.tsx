@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { DURATION, EASE, NumberTicker, SPRING, StatusMorph } from "@/components/motion";
 import { Term } from "@/components/explain";
 import type { GlossaryId } from "@/lib/glossary";
+import { ChainChip } from "@/components/fleet/chain-chip";
 import { AgentActions } from "./agent-actions";
 import { EveExport } from "./eve-export";
 import { FOCUS } from "@/components/ui-tokens";
@@ -105,6 +106,7 @@ export function AgentHeader({
           </span>
         )}
       </div>
+      <ChainChip chains={agent.chains} />
       <p className="max-w-3xl text-[15px] text-stone-700">&ldquo;{agent.request}&rdquo;</p>
       <RepairPayoff show={payoff > shownPayoff} />
       <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Agent actions">
