@@ -11,14 +11,14 @@ Fog rolls back in after 6pm, so bring a layer for the evening.
 
 export default function HomePage() {
   return (
-    <div className="flex flex-col gap-14 py-4 sm:py-8">
+    <div className="flex flex-col gap-16 py-4 sm:gap-20 sm:py-8">
       <div className="grid items-start gap-10 lg:grid-cols-[minmax(0,1fr)_380px]">
         <HomeBuilder showTourCallout belowInput={<AgentsStrip />} />
         <aside aria-label="Example of what you'll receive" className="hidden pt-6 lg:block">
           <FadeIn delay={0.9} y={24}>
-            <p className="mb-2 text-[13px] text-stone-500">What lands in your Slack at 8:00 every morning</p>
-            <div className="rotate-[0.6deg]">
-              <SlackPreview name="SF weather" text={SAMPLE} time="8:00 AM" />
+            <p className="mb-2.5 text-[13px] text-stone-500">What lands in your Slack at 8:00 every morning</p>
+            <div className="rotate-[0.6deg] rounded-[10px] shadow-[0_18px_40px_-24px_rgba(28,25,23,0.45)] transition-transform duration-300 motion-safe:hover:rotate-0">
+              <SlackPreview name="SF weather" text={SAMPLE} time="8:00 AM" channel="daily-weather" />
             </div>
           </FadeIn>
         </aside>

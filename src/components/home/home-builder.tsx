@@ -1,10 +1,10 @@
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { motion } from "motion/react";
-import { Bell, CloudSun, CornerDownLeft, Loader2, Newspaper, PackageCheck, type LucideIcon } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { ArrowRight, Bell, CloudSun, CornerDownLeft, Loader2, Newspaper, PackageCheck, type LucideIcon } from "lucide-react";
 import { FadeIn, Pulse, SPRING, Stagger, StaggerItem } from "@/components/motion";
 import { cn } from "@/lib/utils";
 import { HeroHeadline } from "./hero-headline";
@@ -17,6 +17,10 @@ const EXAMPLES: { icon: LucideIcon; label: string; text: string }[] = [
 ];
 
 const MIN_CHARS = 8;
+const MIN_ROWS = 2;
+const MAX_ROWS = 6;
+const LINE_PX = 26;
+const PAD_Y_PX = 28;
 const TITLE = "What should your agent do?";
 
 type Props = { initial?: string; showTourCallout?: boolean; belowInput?: ReactNode };
@@ -27,6 +31,17 @@ export function HomeBuilder({ initial = "", showTourCallout = false, belowInput 
   const [going, setGoing] = useState<string | null>(null);
   const [filled, setFilled] = useState(0);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const reduce = useReducedMotion();
+
+  // Auto-grow the textarea between MIN_ROWS and MAX_ROWS as the request gets longer.
+  useLayoutEffect(() => {
+    const el = inputRef.current;
+    if (!el) return;
+    el.style.height = "auto";
+    const min = MIN_ROWS * LINE_PX + PAD_Y_PX;
+    const max = MAX_ROWS * LINE_PX + PAD_Y_PX;
+    el.style.height = `${Math.min(max, Math.max(min, el.scrollHeight))}px`;
+  }, [value]);
 
   const start = (text: string) => {
     const request = text.trim();
@@ -52,7 +67,7 @@ export function HomeBuilder({ initial = "", showTourCallout = false, belowInput 
       <HeroHeadline
         id="home-heading"
         text={TITLE}
-        className="text-[clamp(34px,6.4vw,62px)] font-semibold leading-[1.04] tracking-[-0.03em] text-stone-900"
+        className="text-balance text-[clamp(34px,5.6vw,58px)] font-semibold leading-[1.04] tracking-[-0.03em] text-stone-900"
       />
       <FadeIn delay={0.35}>
         <p className="mt-4 max-w-[52ch] text-[17px] leading-relaxed text-stone-600">
@@ -73,27 +88,22 @@ export function HomeBuilder({ initial = "", showTourCallout = false, belowInput 
       </FadeIn>
 
       <FadeIn delay={0.5} className="mt-8">
-        <Pulse trigger={filled} tone="violet" radius={6} className="flex w-full">
+        <Pulse trigger={filled} tone="violet" radius={14} className="flex w-full">
           <form
             data-tour="home-input"
-            className="group/input relative w-full rounded-[6px] border-2 border-stone-900 bg-white shadow-[6px_6px_0_0_#1c1917] transition-[box-shadow,border-color] duration-300 focus-within:border-violet-700 focus-within:shadow-[6px_6px_0_0_#6d28d9]"
+            className="relative w-full rounded-[14px] border-[1.5px] border-stone-300 bg-white shadow-[0_1px_2px_rgba(28,25,23,0.04),0_12px_32px_-18px_rgba(28,25,23,0.28)] transition-[box-shadow,border-color] duration-200 focus-within:border-violet-600 focus-within:shadow-[0_0_0_4px_rgba(124,58,237,0.12),0_8px_30px_-12px_rgba(124,58,237,0.35)]"
             onSubmit={(e) => {
               e.preventDefault();
               start(value);
             }}
           >
-            {/* Soft focus glow: a blurred violet halo that fades in (opacity only) while the box has focus. */}
-            <span
-              aria-hidden
-              className="pointer-events-none absolute -inset-3 -z-10 rounded-[14px] bg-violet-500/25 opacity-0 blur-xl transition-opacity duration-500 group-focus-within/input:opacity-100"
-            />
             <label htmlFor="home-request" className="sr-only">
               {TITLE}
             </label>
             <textarea
               ref={inputRef}
               id="home-request"
-              rows={2}
+              rows={MIN_ROWS}
               value={value}
               disabled={Boolean(going)}
               onChange={(e) => setValue(e.target.value)}
@@ -104,21 +114,26 @@ export function HomeBuilder({ initial = "", showTourCallout = false, belowInput 
                 }
               }}
               placeholder="Every weekday at 9, tell #product what our competitors shipped…"
-              className="block min-h-[96px] w-full resize-none rounded-[6px] bg-transparent px-5 pt-4 pb-2 text-[18px] leading-snug text-stone-900 outline-none transition-opacity duration-300 placeholder:text-stone-400 disabled:opacity-60 sm:text-[21px]"
+              style={{ outline: "none", boxShadow: "none" }}
+              className="block w-full resize-none overflow-y-auto rounded-t-[14px] border-0 bg-transparent px-5 pt-4 pb-3 text-[17px] leading-[26px] text-stone-900 shadow-none outline-none ring-0 transition-opacity duration-300 placeholder:text-stone-400 focus:ring-0 focus-visible:outline-none focus-visible:ring-0 disabled:opacity-60"
             />
-            <div className="flex items-center justify-between gap-3 px-3 pb-3">
-              <span className="hidden items-center gap-1.5 pl-2 text-[13px] text-stone-500 sm:flex">
+            <div className="flex items-center justify-between gap-3 border-t border-stone-200 px-5 py-3">
+              <span className="hidden items-center gap-1.5 text-[13px] text-stone-500 sm:flex">
                 <CornerDownLeft className="size-3.5" aria-hidden /> Enter to build
               </span>
               <motion.button
                 type="submit"
                 disabled={!canSubmit}
-                whileTap={canSubmit ? { scale: 0.97 } : undefined}
+                whileHover={canSubmit && !reduce ? { y: -1 } : undefined}
+                whileTap={canSubmit && !reduce ? { scale: 0.97 } : undefined}
                 transition={SPRING.snappy}
-                className="ml-auto inline-flex h-11 items-center gap-2 rounded-[4px] bg-stone-900 px-5 text-[15px] font-medium text-[#F6F4EF] transition-colors hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600/60 disabled:cursor-not-allowed disabled:opacity-40"
+                className="group/btn ml-auto inline-flex h-10 items-center gap-2 rounded-[10px] bg-stone-900 px-4 text-[15px] font-medium text-[#F6F4EF] shadow-[0_1px_2px_rgba(28,25,23,0.2)] transition-[background-color,box-shadow,opacity] enabled:hover:bg-stone-800 enabled:hover:shadow-[0_6px_16px_-6px_rgba(28,25,23,0.5)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600/60 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-45"
               >
                 {going ? <Loader2 className="size-4 animate-spin" aria-hidden /> : null}
                 {going ? "Planning…" : "Build my agent"}
+                {going ? null : (
+                  <ArrowRight className="size-4 opacity-80 transition-transform duration-200 group-hover/btn:translate-x-0.5" aria-hidden />
+                )}
               </motion.button>
             </div>
           </form>
@@ -132,22 +147,22 @@ export function HomeBuilder({ initial = "", showTourCallout = false, belowInput 
           {EXAMPLES.map(({ icon: Icon, label, text }) => {
             const chosen = value === text;
             return (
-              <StaggerItem as="li" key={text} className="flex">
+              <StaggerItem as="li" key={text} className="flex h-full">
                 <motion.button
                   type="button"
                   disabled={Boolean(going)}
                   onClick={() => fill(text)}
                   aria-pressed={chosen}
-                  whileHover={{ y: -3 }}
-                  whileTap={{ scale: 0.98 }}
+                  whileHover={reduce ? undefined : { y: -2 }}
+                  whileTap={reduce ? undefined : { scale: 0.98 }}
                   transition={SPRING.snappy}
                   className={cn(
-                    "group flex w-full items-start gap-3 rounded-[4px] border px-3.5 py-3 text-left transition-[border-color,background-color,box-shadow]",
-                    "hover:shadow-[0_10px_24px_-14px_rgba(28,25,23,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600/60 disabled:opacity-50",
-                    chosen ? "border-violet-600 bg-violet-50/60" : "border-stone-300 bg-[#FBFAF7] hover:border-stone-900 hover:bg-white",
+                    "group flex h-full min-h-[84px] w-full items-start gap-3 rounded-[10px] border px-3.5 py-3 text-left transition-[border-color,background-color,box-shadow]",
+                    "hover:shadow-[0_10px_24px_-16px_rgba(124,58,237,0.45)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600/60 disabled:opacity-50",
+                    chosen ? "border-violet-600 bg-violet-50/60" : "border-stone-200 bg-[#FBFAF7] hover:border-violet-300 hover:bg-white",
                   )}
                 >
-                  <span className={cn("grid size-8 shrink-0 place-items-center rounded-[4px] transition-colors", chosen ? "bg-violet-600 text-white" : "bg-violet-100 text-violet-800 group-hover:bg-violet-600 group-hover:text-white")}>
+                  <span className={cn("grid size-8 shrink-0 place-items-center rounded-[8px] ring-1 ring-inset transition-colors", chosen ? "bg-violet-600 text-white ring-violet-600" : "bg-violet-50 text-violet-700 ring-violet-200/70 group-hover:bg-violet-100")}>
                     <Icon className="size-4" aria-hidden />
                   </span>
                   <span className="min-w-0 flex-1">
