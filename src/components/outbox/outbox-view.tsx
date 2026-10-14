@@ -2,15 +2,34 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Hash } from "lucide-react";
 import { getAgents, getOutbox } from "@/lib/api-client";
 import type { OutboxMessage } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fullTime, relTime } from "@/components/time";
 import { LABEL, PANEL } from "@/components/ui-tokens";
-import { renderSlack } from "./slack-text";
+import { renderSlack } from "@/components/slack-message";
 
 const POLL_MS = 5000;
+
+function dayLabel(iso: string, now: number): string {
+  const d = new Date(iso);
+  const start = (t: Date) => new Date(t.getFullYear(), t.getMonth(), t.getDate()).getTime();
+  const diff = Math.round((start(new Date(now)) - start(d)) / 86_400_000);
+  if (diff === 0) return "Today";
+  if (diff === 1) return "Yesterday";
+  return d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+}
+
+function groupByDay(messages: OutboxMessage[], now: number) {
+  const groups: { label: string; items: OutboxMessage[] }[] = [];
+  for (const m of messages) {
+    const label = dayLabel(m.createdAt, now);
+    const last = groups[groups.length - 1];
+    if (last && last.label === label) last.items.push(m);
+    else groups.push({ label, items: [m] });
+  }
+  return groups;
+}
 
 export function OutboxView() {
   const [messages, setMessages] = useState<OutboxMessage[] | null>(null);
@@ -44,8 +63,8 @@ export function OutboxView() {
   return (
     <div className="mx-auto w-full max-w-3xl space-y-4">
       <div>
-        <h1 className="text-xl font-semibold text-stone-900">Outbox</h1>
-        <p className="mt-1 text-[13px] text-stone-500">
+        <h1 className="t-title">Outbox</h1>
+        <p className="t-lede mt-2 max-w-[60ch]">
           Every message the fleet sent to Slack, in order. Same content, even if Slack is down.
         </p>
       </div>
@@ -63,46 +82,59 @@ export function OutboxView() {
       ) : messages.length === 0 ? (
         <p className={`${PANEL} px-3 py-10 text-center text-sm text-stone-500`}>No messages sent yet.</p>
       ) : (
-        <ol className="space-y-2">
-          {messages.map((m) => {
-            const name = m.agentId ? names[m.agentId] : undefined;
-            return (
-              <li key={m.id} className={`${PANEL} flex min-w-0 gap-3 p-3`}>
-                <span className="grid size-8 shrink-0 place-items-center rounded-[3px] bg-stone-900 text-[#F6F4EF]" aria-hidden>
-                  <Hash className="size-4" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                    {m.agentId ? (
-                      <Link href={`/agents/${m.agentId}`} className="text-[13px] font-semibold text-stone-900 hover:underline">
-                        {name ?? m.agentId.slice(0, 8)}
-                      </Link>
-                    ) : (
-                      <span className="text-[13px] font-semibold text-stone-900">Agent Factory</span>
-                    )}
-                    <time
-                      dateTime={m.createdAt}
-                      title={fullTime(m.createdAt)}
-                      className="font-mono text-[11px] tabular-nums text-stone-500"
-                    >
-                      {new Date(m.createdAt).toLocaleTimeString([], { hour12: false })} · {relTime(m.createdAt, now)}
-                    </time>
-                    <span
-                      className={`ml-auto font-mono text-[11px] uppercase tracking-[0.12em] ${
-                        m.sentOk ? "text-emerald-600" : "text-red-600"
-                      }`}
-                    >
-                      {m.sentOk ? "delivered" : "failed"}
-                    </span>
-                  </div>
-                  <p className="mt-1 whitespace-pre-wrap break-words text-[13.5px] leading-relaxed text-stone-800">
-                    {renderSlack(m.body)}
-                  </p>
-                </div>
-              </li>
-            );
-          })}
-        </ol>
+        <div className="space-y-5">
+          {groupByDay(messages, now).map((g) => (
+            <section key={g.label} aria-label={g.label}>
+              <h2 className="sticky top-14 z-10 mb-2 flex items-center gap-3 bg-[#F6F4EF]/90 py-1 backdrop-blur-sm">
+                <span className="rounded-full border border-stone-300 bg-[#FBFAF7] px-3 py-0.5 text-[12px] font-semibold text-stone-800">{g.label}</span>
+                <span className="h-px flex-1 bg-stone-300" aria-hidden />
+              </h2>
+              <ol className={`${PANEL} divide-y divide-stone-200`}>
+                {g.items.map((m) => {
+                  const name = m.agentId ? (names[m.agentId] ?? m.agentId.slice(0, 8)) : "Agent Factory";
+                  return (
+                    <li key={m.id} className="group flex min-w-0 gap-3 px-3 py-3 transition-colors hover:bg-white">
+                      <span
+                        className="grid size-9 shrink-0 place-items-center rounded-[4px] bg-stone-900 font-mono text-[15px] font-semibold uppercase text-[#F6F4EF]"
+                        aria-hidden
+                      >
+                        {name.charAt(0)}
+                      </span>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-baseline gap-x-2 gap-y-0.5">
+                          {m.agentId ? (
+                            <Link
+                              href={`/agents/${m.agentId}`}
+                              className="rounded-[2px] text-[14px] font-bold text-stone-900 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600/60"
+                            >
+                              {name}
+                            </Link>
+                          ) : (
+                            <span className="text-[14px] font-bold text-stone-900">{name}</span>
+                          )}
+                          <span className="rounded-[2px] bg-stone-200 px-1 font-mono text-[10px] font-semibold leading-[1.5] text-stone-600">APP</span>
+                          <time
+                            dateTime={m.createdAt}
+                            title={fullTime(m.createdAt)}
+                            className="font-mono text-[11px] tabular-nums text-stone-500"
+                          >
+                            {new Date(m.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · {relTime(m.createdAt, now)}
+                          </time>
+                          <span className={`ml-auto font-mono text-[11px] uppercase tracking-[0.12em] ${m.sentOk ? "text-emerald-600" : "text-red-600"}`}>
+                            {m.sentOk ? "delivered" : "failed"}
+                          </span>
+                        </div>
+                        <p className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-relaxed text-stone-800">
+                          {renderSlack(m.body)}
+                        </p>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ol>
+            </section>
+          ))}
+        </div>
       )}
       <p className={LABEL}>Polling every 5s</p>
     </div>

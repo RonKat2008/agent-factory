@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Cog, Factory } from "lucide-react";
+import { getAgents, getStats } from "@/lib/api-client";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -25,7 +25,55 @@ function Clock() {
   return <span className="tabular-nums text-stone-700">{t ?? "--:--:--"}</span>;
 }
 
+const WORKING = new Set(["repairing", "building", "testing"]);
+
+function FactoryGlyph() {
+  return (
+    <svg viewBox="0 0 32 32" className="size-7" aria-hidden>
+      <rect width="32" height="32" rx="3" fill="#1c1917" />
+      <path d="M5 25V14l6 3.5V14l6 3.5V9h4v16z" fill="#F6F4EF" />
+      <circle cx="24" cy="9" r="5" fill="#7c3aed" stroke="#F6F4EF" strokeWidth="1.5" />
+      <circle cx="24" cy="9" r="1.6" fill="#F6F4EF" />
+    </svg>
+  );
+}
+
+function useFactoryPulse() {
+  const [working, setWorking] = useState(false);
+  const [live, setLive] = useState<number | null>(null);
+  useEffect(() => {
+    let alive = true;
+    const pollAgents = async () => {
+      try {
+        const agents = await getAgents();
+        if (alive) setWorking(agents.some((a) => WORKING.has(a.status)));
+      } catch {
+        /* keep last known state */
+      }
+    };
+    const pollStats = async () => {
+      try {
+        const s = await getStats();
+        if (alive) setLive(s.agentsLive);
+      } catch {
+        /* keep last known state */
+      }
+    };
+    void pollAgents();
+    void pollStats();
+    const a = setInterval(pollAgents, 5000);
+    const b = setInterval(pollStats, 10000);
+    return () => {
+      alive = false;
+      clearInterval(a);
+      clearInterval(b);
+    };
+  }, []);
+  return { working, live };
+}
+
 export function TopBar() {
+  const { working, live } = useFactoryPulse();
   const path = usePathname();
   const navRef = useRef<HTMLElement>(null);
   useEffect(() => {
@@ -34,14 +82,11 @@ export function TopBar() {
       ?.scrollIntoView({ block: "nearest", inline: "center" });
   }, [path]);
   return (
-    <header className="sticky top-0 z-20 border-b border-stone-300 bg-[#F6F4EF]/95 backdrop-blur">
-      <div className="mx-auto flex h-12 w-full max-w-[1440px] items-center gap-4 px-4 sm:px-6">
-        <Link href="/" className="flex shrink-0 items-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/40">
-          <span className="relative grid size-6 place-items-center rounded-[3px] bg-stone-900 text-[#F6F4EF]">
-            <Factory className="size-3.5" aria-hidden />
-            <Cog className="absolute -right-1 -top-1 size-3 rounded-full bg-[#F6F4EF] text-violet-600" aria-hidden />
-          </span>
-          <span className="font-mono text-[13px] font-semibold tracking-[0.18em]">AGENT FACTORY</span>
+    <header className={cn("sticky top-0 z-20 border-b border-stone-300 bg-[#F6F4EF]/90 shadow-[0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-md", working && "bar-shimmer")}>
+      <div className="mx-auto flex h-14 w-full max-w-[1440px] items-center gap-4 px-4 sm:px-6">
+        <Link href="/" className="group flex shrink-0 items-center gap-2.5 rounded-[3px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600/60">
+          <span className="transition-transform duration-200 group-hover:-rotate-6 group-active:scale-95"><FactoryGlyph /></span>
+          <span className="font-mono text-[13px] font-semibold tracking-[0.2em] text-stone-900">AGENT FACTORY</span>
         </Link>
         <nav
           ref={navRef}
@@ -56,7 +101,7 @@ export function TopBar() {
                 href={n.href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "shrink-0 rounded-[3px] px-2.5 py-1 text-[13px] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/40",
+                  "shrink-0 rounded-[3px] px-2.5 py-1 text-[14px] transition-colors active:scale-[0.97] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600/60",
                   active ? "bg-stone-900 text-[#F6F4EF]" : "text-stone-600 hover:bg-stone-200/70 hover:text-stone-900",
                 )}
               >
@@ -67,6 +112,10 @@ export function TopBar() {
           })}
         </nav>
         <div className="ml-auto hidden shrink-0 items-center gap-3 font-mono text-[11px] text-stone-500 sm:flex">
+          <span className="inline-flex items-center gap-1.5 text-stone-700" title="Agents currently live">
+            <span className="text-emerald-600">●</span>
+            <span className="tabular-nums">{live ?? "–"}</span> agents live
+          </span>
           <span className="inline-flex items-center gap-1.5">
             cron <span className="animate-pulse text-emerald-600">●</span> every minute
           </span>

@@ -46,9 +46,9 @@ function Line({ e, struck }: { e: FeedEvent; struck: boolean }) {
 export function BuildLog({ events, active }: { events: FeedEvent[]; active: boolean }) {
   const lastFix = events.map((e) => e.type).lastIndexOf("self_fixed");
   return (
-    <section aria-label="Build log" className="overflow-hidden rounded-[3px] border border-stone-800 bg-stone-950">
+    <section aria-label="Build log" className="overflow-hidden rounded-[3px] border border-stone-800 bg-stone-950 shadow-[0_18px_40px_-20px_rgba(28,25,23,0.6)]">
       <header className="flex items-center justify-between border-b border-stone-800 px-3 py-1.5 font-mono text-[11px] uppercase tracking-[0.12em] text-stone-500">
-        <span>Factory log</span>
+        <span className="flex items-center gap-2"><span className="flex gap-1" aria-hidden><i className="size-2 rounded-full bg-stone-700" /><i className="size-2 rounded-full bg-stone-700" /><i className="size-2 rounded-full bg-stone-700" /></span>factory.log</span>
         <span className="flex items-center gap-1.5">
           <span className={cn("size-1.5 rounded-full", active ? "bg-sky-400 motion-safe:animate-pulse" : "bg-stone-600")} aria-hidden />
           {active ? "running" : "idle"}
@@ -56,7 +56,7 @@ export function BuildLog({ events, active }: { events: FeedEvent[]; active: bool
       </header>
       <ol
         aria-live="polite"
-        className="min-h-40 px-3 py-2.5 font-mono text-[12.5px] leading-relaxed text-stone-100"
+        className="min-h-48 px-4 py-3 font-mono text-[13px] leading-relaxed text-stone-100"
       >
         {events.length === 0 && !active && <li className="text-stone-500">no events yet</li>}
         {events.map((e, i) => (

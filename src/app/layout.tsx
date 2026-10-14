@@ -16,6 +16,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
   title: "Agent Factory",
   description:
     "Other tools help you build an agent. Ours takes responsibility for keeping it working.",

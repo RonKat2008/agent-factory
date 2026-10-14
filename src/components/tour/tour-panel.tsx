@@ -54,7 +54,7 @@ export function TourPanel() {
     <div className="mx-auto max-w-[1040px] space-y-4">
       <header className="space-y-1.5 pb-1">
         <p className={LABEL}>guided demo · no login</p>
-        <h1 className="text-[34px] font-semibold leading-none tracking-tight text-stone-900">The 60-second tour</h1>
+        <h1 className="t-title text-[32px]">The 60-second tour</h1>
         <p className="max-w-[62ch] text-[14.5px] leading-relaxed text-stone-600">
           Acme is a fake competitor. One of our agents has been watching its changelog all day. Break Acme&apos;s website and watch the factory fix its own agent, with no human involved.
         </p>
@@ -104,7 +104,7 @@ export function TourPanel() {
             </div>
             <div className="md:text-right">
               <p className={LABEL}>{running ? "elapsed" : "total"}</p>
-              <p aria-live="off" className={cn("font-mono text-[40px] font-semibold leading-none tabular-nums", t.repaired ? "text-violet-600" : t.stuck ? "text-red-600" : "text-stone-900")}>
+              <p aria-live="off" className={cn("font-mono text-[40px] font-semibold leading-none tabular-nums", t.repaired ? "celebrate-glow text-violet-600" : t.stuck ? "text-red-600" : "text-stone-900")}>
                 {mmss(t.elapsedMs)}
               </p>
             </div>
@@ -112,7 +112,7 @@ export function TourPanel() {
         )}
 
         {t.repaired && t.startedAt && (
-          <div className="feed-row-enter mt-4 space-y-3 rounded-[3px] border border-violet-300 border-l-4 border-l-violet-600 bg-violet-50/70 p-4">
+          <div className="celebrate-in mt-4 space-y-3 rounded-[3px] border border-violet-300 border-l-4 border-l-violet-600 bg-violet-50/70 p-4">
             <p className="flex items-center gap-2 text-[18px] font-semibold text-violet-900">
               <PartyPopper className="size-5" aria-hidden />
               <span>
@@ -123,7 +123,7 @@ export function TourPanel() {
               <span className={LABEL}>diagnosis</span><br />
               {diagnosis || t.repaired.message}
             </p>
-            <Link href={`/agents/${watcher!.id}`} className={cn(BTN_PRIMARY, "w-fit bg-violet-700 hover:bg-violet-600")}>
+            <Link href={`/agents/${watcher!.id}`} className={cn(BTN_PRIMARY, "w-fit bg-violet-700 hover:bg-violet-600 active:scale-[0.97]")}>
               See the diff <ArrowRight className="size-3.5" aria-hidden />
             </Link>
             <div>
