@@ -26,6 +26,7 @@
     "cron-parser": "^5.10.2",
     "cronstrue": "^3.32.0",
     "lucide-react": "^1.50.0",
+    "motion": "^14.2.0",
     "next": "16.3.8",
     "next-themes": "^0.4.6",
     "react": "19.2.8",
