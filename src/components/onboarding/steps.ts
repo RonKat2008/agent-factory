@@ -31,7 +31,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     key: "repair",
     targets: ["nav-tour", "how-repair"],
     title: "If it breaks, it fixes itself — try it in the Tour",
-    body: "When a website changes and a run fails, the factory finds the cause, patches the agent, re-tests it, and tells you what it fixed. The 60-second Tour lets you break one on purpose.",
+    body: "When a website changes and a run fails, the factory finds the cause, patches the agent, re-tests it, and tells you what it fixed. The 3-minute guided Tour walks through every feature, and lets you break one on purpose.",
   },
 ];
 

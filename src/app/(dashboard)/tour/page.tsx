@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { TourPanel } from "@/components/tour/tour-panel";
+import { JudgeTour } from "@/components/tour/judge-tour";
 
-export const metadata: Metadata = { title: "The 60-second tour · Agent Factory" };
+export const metadata: Metadata = { title: "The 3-minute tour · Agent Factory" };
 
 export default function TourPage() {
-  return <TourPanel />;
+  return <JudgeTour />;
 }

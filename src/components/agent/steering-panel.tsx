@@ -71,7 +71,7 @@ export function SteeringPanel({ agent, runs, onChanged }: { agent: Agent; runs: 
         </section>
       )}
 
-      <section className={cn(PANEL, "flex flex-col gap-3.5 p-4")} aria-label="Change what it does">
+      <section id="steer" className={cn(PANEL, "flex scroll-mt-24 flex-col gap-3.5 p-4")} aria-label="Change what it does">
         <div className="flex flex-col gap-1">
           <h2 className="text-[16px] font-semibold tracking-tight text-stone-900">Change what it does</h2>
           <p className="text-[13px] leading-snug text-stone-500">

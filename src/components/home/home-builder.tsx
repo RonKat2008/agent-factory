@@ -61,13 +61,13 @@ export function HomeBuilder({ initial = "", showTourCallout = false, belowInput 
         {showTourCallout && (
           <Link
             href="/tour"
-            className="group mt-4 inline-flex items-center gap-2 rounded-full border border-violet-200 bg-violet-50/70 py-1 pl-2 pr-3 text-[13px] text-violet-900 transition-colors hover:border-violet-400 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600/60"
+            className="group mt-4 inline-flex items-center gap-2 rounded-full border border-violet-300 bg-violet-50 py-1.5 pl-2.5 pr-3.5 text-[14px] text-violet-900 transition-colors hover:border-violet-400 hover:bg-violet-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600/60"
           >
             <span className="relative grid size-2 place-items-center" aria-hidden>
               <span className="absolute inset-0 rounded-full bg-violet-500/50 motion-safe:animate-ping" />
               <span className="relative size-2 rounded-full bg-violet-600" />
             </span>
-            New here? Take the 60-second tour and watch an agent fix itself
+            <strong className="font-semibold">Judges: take the 3-minute tour</strong> <span aria-hidden>→</span>
           </Link>
         )}
       </FadeIn>

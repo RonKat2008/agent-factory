@@ -34,6 +34,23 @@ export function AskOps() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
+  // Other pages (the tour) open the panel with a question: window.dispatchEvent(new CustomEvent("ops:open", { detail: { prompt } })).
+  const sendRef = useRef(chat.send);
+  const statusRef = useRef(chat.status);
+  useEffect(() => {
+    sendRef.current = chat.send;
+    statusRef.current = chat.status;
+  });
+  useEffect(() => {
+    const onOpen = (e: Event) => {
+      setOpen(true);
+      const prompt = (e as CustomEvent<{ prompt?: unknown }>).detail?.prompt;
+      if (typeof prompt === "string" && prompt.trim() && statusRef.current === "idle") void sendRef.current(prompt.trim());
+    };
+    window.addEventListener("ops:open", onOpen);
+    return () => window.removeEventListener("ops:open", onOpen);
+  }, []);
+
   // Agent names in answers become chips; refresh the list each time the panel opens.
   useEffect(() => {
     if (!open) return;

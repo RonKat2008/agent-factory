@@ -2,6 +2,7 @@ import { TopBar } from "@/components/fleet/top-bar";
 import { MotionProvider } from "@/components/motion/motion-provider";
 import { PageTransition } from "@/components/motion/page-transition";
 import { OnboardingOverlay } from "@/components/onboarding/onboarding-overlay";
+import { TourReturnPill } from "@/components/tour/tour-return-pill";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -11,6 +12,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         <PageTransition>{children}</PageTransition>
       </main>
       <OnboardingOverlay />
+      <TourReturnPill />
     </MotionProvider>
   );
 }
