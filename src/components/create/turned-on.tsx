@@ -41,7 +41,7 @@ export function TurnedOn({ agentId, where, when, celebrate }: Props) {
         <StatusMorph status={status} size="md" className="w-fit" />
         <div>
           <h3 id="on-heading" className="text-[22px] font-semibold tracking-[-0.02em] text-stone-900">
-            Your agent is on
+            Your agent is on <span className="chequer align-middle" aria-hidden />
           </h3>
           <p className="mt-1 max-w-[56ch] text-[15px] text-stone-600">
             It will message {where} {when ?? "on its schedule"}. If a source changes and it breaks, it fixes itself and tells you what it changed.

@@ -79,10 +79,10 @@ export function ChapterConnect() {
       title="Connect anything"
       lede={
         <p>
-          Agents are assembled from connectors. A handful are built in, and anyone can add another by pasting an MCP server or HTTP API. Once added, the factory can use it in any agent it builds, the same way the deep-dive uses Exa.
+          Agents are assembled from connectors. A handful are built in, and anyone can add another by pasting an MCP server or HTTP API. Once added, Pitcrew can use it in any agent it builds, the same way the deep-dive uses Exa.
         </p>
       }
-      different={<p>The factory decides which connectors a job needs from your sentence. You never pick tools or wire inputs and outputs by hand, and a new community connector makes every future agent more capable.</p>}
+      different={<p>Pitcrew decides which connectors a job needs from your sentence. You never pick tools or wire inputs and outputs by hand, and a new community connector makes every future agent more capable.</p>}
       tryIt={<ConnectTry />}
       products={["MCP", "Sandbox", "Neon"]}
       hood={

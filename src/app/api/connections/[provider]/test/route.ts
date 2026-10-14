@@ -7,7 +7,7 @@ import {
 
 type Ctx = { params: Promise<{ provider: string }> };
 
-/** Test the saved credential (admin). Slack posts "✅ Agent Factory connected"; GitHub checks /user + the default repo. */
+/** Test the saved credential (admin). Slack posts "✅ Pitcrew connected"; GitHub checks /user + the default repo. */
 export async function POST(request: NextRequest, { params }: Ctx) {
   return guard("connections.test", async () => {
     const { provider } = await params;

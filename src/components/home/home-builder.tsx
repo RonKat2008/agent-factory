@@ -56,7 +56,7 @@ export function HomeBuilder({ initial = "", showTourCallout = false, belowInput 
       />
       <FadeIn delay={0.35}>
         <p className="mt-4 max-w-[52ch] text-[17px] leading-relaxed text-stone-600">
-          Describe a recurring job in one sentence. We build it, test it on real data, show you the exact message you’ll get, and keep it working every day.
+          Describe a recurring job in one sentence. Pitcrew builds it, tests it, runs it — and pits it back into shape when it breaks.
         </p>
         {showTourCallout && (
           <Link
@@ -67,7 +67,7 @@ export function HomeBuilder({ initial = "", showTourCallout = false, belowInput 
               <span className="absolute inset-0 rounded-full bg-violet-500/50 motion-safe:animate-ping" />
               <span className="relative size-2 rounded-full bg-violet-600" />
             </span>
-            <strong className="font-semibold">Judges: take the 3-minute tour</strong> <span aria-hidden>→</span>
+            <strong className="font-semibold">Judges: take the 3-minute formation lap</strong> <span aria-hidden>→</span>
           </Link>
         )}
       </FadeIn>

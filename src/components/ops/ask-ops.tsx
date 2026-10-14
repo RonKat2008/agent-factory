@@ -71,7 +71,7 @@ export function AskOps() {
       <button ref={triggerRef} type="button" onClick={() => setOpen(true)} aria-haspopup="dialog" aria-keyshortcuts="Control+K Meta+K"
         className={cn("inline-flex h-8 shrink-0 items-center gap-2 rounded-[3px] border border-stone-300 bg-[#FBFAF7] px-2.5 text-[14px] text-stone-800 transition-colors hover:border-stone-500 hover:bg-white active:scale-[0.97]", FOCUS)}>
         <MessageSquareText className="size-4" aria-hidden />
-        Ask Ops
+        Team radio
         <kbd className="hidden rounded-[2px] border border-stone-300 bg-stone-100 px-1 font-mono text-[10.5px] text-stone-500 md:inline">{mac ? "⌘K" : "Ctrl K"}</kbd>
       </button>
       {/* Portal: the header has backdrop-filter, which would otherwise trap position:fixed inside it. */}

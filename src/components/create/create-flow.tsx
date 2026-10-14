@@ -131,7 +131,7 @@ export function CreateFlow() {
     let alive = true;
     const tick = () =>
       load().catch((e) => {
-        if (alive) setPollError(errText(e, "Lost contact with the factory"));
+        if (alive) setPollError(errText(e, "Lost contact with Pitcrew"));
       });
     void tick();
     const t = setInterval(tick, POLL_MS);

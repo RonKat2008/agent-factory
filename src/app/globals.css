@@ -128,7 +128,7 @@
     @apply font-sans;
   }
 }
-/* --- Agent Factory shell additions --- */
+/* --- Pitcrew shell additions --- */
 body {
   background-color: #f6f4ef;
   color: #1c1917;
@@ -247,4 +247,26 @@ body::before {
 @media (prefers-reduced-motion: reduce) {
   .bar-shimmer::after { animation: none; width: 100%; opacity: 0.5; }
   .celebrate-in, .celebrate-glow { animation: none; }
+}
+
+/* --- Chequered-flag micro-motif on success moments (Turn on, Pit stop complete) --- */
+.chequer {
+  display: inline-block;
+  width: 18px;
+  height: 12px;
+  flex-shrink: 0;
+  border-radius: 1px;
+  background-color: #fbfaf7;
+  background-image: conic-gradient(#1c1917 25%, transparent 0 50%, #1c1917 0 75%, transparent 0);
+  background-size: 6px 6px;
+  box-shadow: 0 0 0 1px rgba(28, 25, 23, 0.35);
+  transform-origin: left center;
+  animation: chequer-wave 0.9s ease-in-out 3;
+}
+@keyframes chequer-wave {
+  0%, 100% { transform: skewY(0deg) scaleX(1); }
+  50% { transform: skewY(-8deg) scaleX(0.92); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chequer { animation: none; }
 }

@@ -140,7 +140,7 @@ function Finale({ restart }: { restart: () => void }) {
       </motion.div>
       <h2 id="finale-title" className="text-[clamp(30px,4.4vw,48px)] font-semibold leading-[1.04] tracking-[-0.03em] text-stone-900">You&apos;ve seen it all</h2>
       <p className="max-w-[56ch] text-[18px] leading-relaxed text-stone-700">
-        Other tools help you build an agent. Agent Factory takes responsibility for keeping it working: tested before it ships, repaired when the world changes, and steerable in plain English.
+        Other tools help you build an agent. Pitcrew takes responsibility for keeping it running: tested before it ships, repaired when the world changes, and steerable in plain English.
       </p>
       <div className="flex flex-wrap gap-2">
         <Link href="/" className={cn(BTN_PRIMARY, "h-11 px-5 text-[15px]")}>Build your own agent</Link>
@@ -204,7 +204,7 @@ export function JudgeTour() {
   return (
     <div className="mx-auto max-w-[1180px] py-2">
       <header className="mb-6 max-w-[70ch] space-y-2 lg:mb-8">
-        <h1 className="t-title text-[clamp(28px,3.2vw,34px)]">See everything Agent Factory does, in 3 minutes</h1>
+        <h1 className="t-title text-[clamp(28px,3.2vw,34px)]">Formation lap: see everything Pitcrew does in 3 minutes</h1>
         <p className="text-[15px] leading-relaxed text-stone-600">
           Eight short chapters. Each one explains a feature in plain English, says why it matters, and lets you try it live on this deployment. No sign-up needed.
         </p>

@@ -18,7 +18,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
   {
     key: "build",
     targets: ["how-build", "build-log"],
-    title: "The factory builds it and tests it before it ever runs",
+    title: "Pitcrew builds it and tests it before it ever runs",
     body: "It assembles the agent from ready-made blocks, does a test run on real data and checks the result. Only an agent that passes its tests can go live.",
   },
   {
@@ -31,7 +31,7 @@ export const TOUR_STEPS: readonly TourStep[] = [
     key: "repair",
     targets: ["nav-tour", "how-repair"],
     title: "If it breaks, it fixes itself — try it in the Tour",
-    body: "When a website changes and a run fails, the factory finds the cause, patches the agent, re-tests it, and tells you what it fixed. The 3-minute guided Tour walks through every feature, and lets you break one on purpose.",
+    body: "When a website changes and a run fails, your pit crew finds the cause, patches the agent, re-tests it, and tells you what it fixed. The 3-minute guided Tour walks through every feature, and lets you break one on purpose.",
   },
 ];
 

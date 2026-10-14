@@ -54,10 +54,11 @@ function RepairPayoff({ show }: { show: boolean }) {
             <Wrench className="size-4 text-violet-600" aria-hidden />
             <span>
               <strong className="font-semibold">
-                <Term id="repair">Fixed itself</Term>
+                <Term id="repair">Pit stop complete</Term>
               </strong>{" "}
-              and it&rsquo;s back to work. No human needed.
+              — back on track. No human needed.
             </span>
+            <span className="chequer" aria-hidden />
           </p>
         </motion.div>
       )}

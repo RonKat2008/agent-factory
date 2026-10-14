@@ -24,7 +24,7 @@ export function SlackPost({ message, label }: { message: OutboxMessage; label: s
       <div className="flex gap-2.5 px-3 py-2.5">
         <span aria-hidden className="mt-0.5 grid size-8 shrink-0 place-items-center rounded-[4px] bg-stone-900 font-mono text-[12px] font-bold text-[#F6F4EF]">AF</span>
         <div className="min-w-0">
-          <p className="text-[13px] font-bold text-stone-900">Agent Factory <span className="ml-1 rounded-[2px] bg-stone-200 px-1 font-mono text-[10px] font-medium text-stone-600">APP</span></p>
+          <p className="text-[13px] font-bold text-stone-900">Pitcrew <span className="ml-1 rounded-[2px] bg-stone-200 px-1 font-mono text-[10px] font-medium text-stone-600">APP</span></p>
           <p className="whitespace-pre-wrap break-words text-[13.5px] leading-snug text-stone-800">{mrkdwn(message.body)}</p>
         </div>
       </div>

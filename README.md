@@ -1,8 +1,12 @@
-# Agent Factory
+# Pitcrew
 
-> Other tools help you build an agent. Ours takes responsibility for keeping it working.
+> Other tools help you build an agent. Pitcrew takes responsibility for keeping it running.
+>
+> Your AI agents get a pit crew.
 
-Describe a recurring job in one sentence. Agent Factory builds the agent, writes its tests, ships it only if the tests pass, runs it on a schedule, and repairs it when it breaks. Agents are JSON specs assembled from a fixed block library, so every build, edit, and repair is a versioned, testable diff rather than generated code. Agents can trigger other agents, and every post feeds a fleet knowledge graph that later agents can recall.
+**Why Pitcrew:** built at an event with an F1 team, so we leaned in. Your agents get a pit crew: built, tested, running, and fixed in seconds when they break.
+
+Describe a recurring job in one sentence. Pitcrew builds the agent, writes its tests, ships it only if the tests pass, runs it on a schedule, and repairs it when it breaks. Agents are JSON specs assembled from a fixed block library, so every build, edit, and repair is a versioned, testable diff rather than generated code. Agents can trigger other agents, and every post feeds a fleet knowledge graph that later agents can recall.
 
 Built for the Vercel Fast Forward hackathon, Agents & Factories track.
 
@@ -18,10 +22,10 @@ Built for the Vercel Fast Forward hackathon, Agents & Factories track.
 
 No account needed. Open the app, then:
 
-1. **Tour -> Break.** Open `/tour` and click Break. The fake competitor site (Acme) "redesigns" and its changelog URL starts returning 404. Run the Competitor watcher and watch the factory repair itself in about 8 seconds: diagnose, patch, re-test, new version. Open the diff: the URL changed and one regression test was added.
+1. **Tour -> Break.** Open `/tour` and click Break. The fake competitor site (Acme) "redesigns" and its changelog URL starts returning 404. Run the Competitor watcher and watch Pitcrew repair itself in about 8 seconds: diagnose, patch, re-test, new version. Open the diff: the URL changed and one regression test was added.
 2. **Publish.** Click Publish on the Tour. The watcher now sees a new Acme release and posts; that post fires the chained Competitor deep-dive agent, which researches the release with Exa and posts its own analysis. Check the Outbox if Slack is not connected.
 3. **Graph.** Open Graph. The Flow view shows the watcher feeding the deep-dive; the Knowledge view shows the entities extracted from every post.
-4. **Ask Ops.** Press Cmd+K (Ctrl+K on Windows) and ask "why did the watcher break?". The eve Fleet Ops agent answers from run history. Anything that changes the fleet (pause, edit, re-run) asks for your approval first.
+4. **Team radio (Ask Ops).** Press Cmd+K (Ctrl+K on Windows) and ask "why did the watcher break?". The eve Fleet Ops agent answers from run history. Anything that changes the fleet (pause, edit, re-run) asks for your approval first.
 5. **Build your own.** Go to the home page, type a job in one sentence, review the plan and the Slack preview, click "Send me a test now", and go live. Sign in with Slack to have posts go to your own channel.
 
 ## How it works
@@ -81,7 +85,7 @@ Failures (a 404, a bad link, a thumbs-down) become either a repair with a regres
 - English edits ("only posts with 100+ points") produce a new version, re-tested before it replaces the old one.
 - `require_approval` pauses a run until a human approves or rejects.
 - A thumbs-down on a Slack post becomes a proposed fix to the agent.
-- Ask Ops (Cmd+K): chat with the eve Fleet Ops agent; mutating actions need approval.
+- Team radio (Cmd+K): chat with the eve Fleet Ops agent; mutating actions need approval.
 
 **Connect**
 - Sign in with Slack: any visitor can connect their workspace, and their agents post to their own channel.
@@ -123,7 +127,7 @@ An agent spec (`src/lib/spec.ts`) is a schedule, ordered steps, tests, and a pla
 | Product | What it does here |
 |---|---|
 | Hosting | Serves the Next.js 16 app and APIs. |
-| Fluid compute | Runs the long AI and workflow requests (build, repair, Ask Ops stream). |
+| Fluid compute | Runs the long AI and workflow requests (build, repair, Team radio stream). |
 | Cron | Per-minute tick that claims due agents. |
 | Workflow DevKit | Durable, retryable `runAgent`, `buildAgent`, and `repairAgent`. |
 | AI SDK | Structured generation and tool use for build, revise, repair, edit, and `llm` blocks. |
@@ -194,7 +198,7 @@ The Fleet Ops agent lives in `ops-agent/` and deploys as its own Vercel project 
 - Schedules have a minimum interval and each visitor has a live-agent cap.
 - Admin and demo routes need `ADMIN_KEY`; connection management needs an admin session.
 - The GitHub token is scoped to the connected repo. Outbound fetches go through a guarded network helper.
-- Ask Ops cannot change the fleet without an explicit approval.
+- Team radio cannot change the fleet without an explicit approval.
 
 ## Docs
 

@@ -1,9 +1,9 @@
-# Fleet Ops (eve agent for Agent Factory)
+# Fleet Ops (eve agent for Pitcrew)
 
 Fleet Ops is a durable backend agent built on [eve](https://eve.dev). It watches the
-Agent Factory fleet and helps a human steer it: why something broke, what got repaired,
+Pitcrew fleet and helps a human steer it: why something broke, what got repaired,
 and pause, edit or re-run agents in plain English. It runs as its **own Vercel project**
-(`agent-factory-ops`). It only talks to the factory's public JSON API, so if it fails
+(`agent-factory-ops`). It only talks to Pitcrew's public JSON API, so if it fails
 the main app is unaffected.
 
 - Production: https://agent-factory-ops.vercel.app (health: `/eve/v1/health`)
@@ -85,6 +85,6 @@ Or open the terminal UI against it:
 
 - "Why did the Acme watcher break?"
 - "Pause the HN digest" (asks for approval)
-- "Make the release assistant only flag security issues" (asks for approval, then the factory dry-runs and tests the new version)
+- "Make the release assistant only flag security issues" (asks for approval, then Pitcrew dry-runs and tests the new version)
 - "List the agents and their health"
 - "What got repaired in the last 24 hours?"

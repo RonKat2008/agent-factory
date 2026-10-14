@@ -20,7 +20,7 @@ const PRODUCTS: { name: string; does: string }[] = [
   { name: "eve", does: "Fleet Ops is its own eve agent, and any agent can be exported as an eve project." },
   { name: "BotID and rate limits", does: "Public buttons like this tour's are protected from bots and stampedes." },
   { name: "Analytics and Speed Insights", does: "Real traffic and Core Web Vitals for the app." },
-  { name: "Fluid compute", does: "Long AI requests and streams (builds, repairs, Ask Ops) run without cold-start pain." },
+  { name: "Fluid compute", does: "Long AI requests and streams (builds, repairs, Team radio) run without cold-start pain." },
   { name: "Neon Postgres", does: "Agents, versions, runs and tests. Local dev runs on a dev branch; production on its own database." },
 ];
 

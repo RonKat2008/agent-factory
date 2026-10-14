@@ -144,7 +144,7 @@ export function AddConnectorPanel({ onClose, onCreated }: Props) {
       <header className="flex items-center justify-between gap-3 border-b border-stone-300 px-4 py-3">
         <div className="min-w-0">
           <h2 id="add-connector-heading" className="text-[15px] font-semibold text-stone-900">Add a connector</h2>
-          <p className="text-[12.5px] text-stone-600">Anyone can add one. The factory&apos;s builder sees it immediately and agents can call it on their next build.</p>
+          <p className="text-[12.5px] text-stone-600">Anyone can add one. Pitcrew&apos;s builder sees it immediately and agents can call it on their next build.</p>
         </div>
         <button type="button" onClick={onClose} className={cn(BTN_SECONDARY, "w-8 px-0")} aria-label="Close">
           <X className="size-4" aria-hidden />

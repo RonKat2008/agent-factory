@@ -67,7 +67,7 @@ function useChain(cast: Cast | null, since: number | null): Live {
         setState({ since, live: {
           watcherEvents: we.filter((e) => after(e.createdAt)).sort(asc),
           deepEvents: de.filter((e) => after(e.createdAt)).sort(asc),
-          watcherPost: posts.find((m) => m.agentId === cast.watcher!.id && !/I fixed|I couldn't fix/.test(m.body)) ?? null,
+          watcherPost: posts.find((m) => m.agentId === cast.watcher!.id && !/I fixed|I couldn't fix|Pit stop complete|Pitcrew needs you/.test(m.body)) ?? null,
           deepPost: cast.deepDive ? (posts.find((m) => m.agentId === cast.deepDive!.id) ?? null) : null,
         } });
       } catch {

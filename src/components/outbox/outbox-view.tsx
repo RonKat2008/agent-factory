@@ -115,7 +115,7 @@ export function OutboxView() {
                 items={g.items}
                 getKey={(m) => m.id}
                 renderItem={(m) => {
-                  const name = m.agentId ? (names[m.agentId] ?? m.agentId.slice(0, 8)) : "Agent Factory";
+                  const name = m.agentId ? (names[m.agentId] ?? m.agentId.slice(0, 8)) : "Pitcrew";
                   return (
                     <div className="group flex min-w-0 gap-3 px-4 py-4 transition-colors hover:bg-white">
                       <span

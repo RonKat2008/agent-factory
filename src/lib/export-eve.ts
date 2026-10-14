@@ -278,7 +278,7 @@ export function specToEveProject(spec: AgentSpec, opts: EveExportOpts): Record<s
   const vars = env.filter((l) => /^[A-Z_]+=/.test(l)).map((l) => `- \`${l.split("=")[0]}\``).join("\n");
   files["README.md"] = `# ${spec.name}
 
-Exported from Agent Factory v${opts.version} (agent \`${opts.agentId}\`, ${opts.factoryUrl}) as a standalone [eve](https://www.npmjs.com/package/eve) agent. Requires Node.js 24+.
+Exported from Pitcrew v${opts.version} (agent \`${opts.agentId}\`, ${opts.factoryUrl}) as a standalone [eve](https://www.npmjs.com/package/eve) agent. Requires Node.js 24+.
 
 Schedule: \`${spec.schedule}\` (UTC), defined in \`agent/schedules/${slug}.ts\`.
 
@@ -302,9 +302,9 @@ Set these environment variables in the Vercel project:
 
 ${vars}
 ${gated ? "\n## Approval\n\n`send_slack` uses `approval: always()`. eve schedules have no channel, so a scheduled run that reaches an approval-gated call fails instead of waiting. Add a channel (`npx eve add`) and route the schedule through it, or remove `approval` from `agent/tools/send_slack.ts` to post unattended.\n" : ""}
-## Tests it passed in Agent Factory
+## Tests it passed in Pitcrew
 
-Exported from Agent Factory v${opts.version} — tests it passed:
+Exported from Pitcrew v${opts.version} — tests it passed:
 
 ${spec.tests.map((t) => `- ${describeTest(t)}`).join("\n")}
 `;

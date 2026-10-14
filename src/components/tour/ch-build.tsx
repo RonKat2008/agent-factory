@@ -109,7 +109,7 @@ export function ChapterBuild() {
       title="Build an agent from one sentence"
       lede={
         <p>
-          Describe a recurring job the way you would to a coworker. The factory turns it into a working agent, runs it on real data, checks the result, and shows you the exact Slack message you will get. Nothing goes live until its tests pass.
+          Describe a recurring job the way you would to a coworker. Pitcrew turns it into a working agent, runs it on real data, checks the result, and shows you the exact Slack message you will get. Nothing goes live until its tests pass.
         </p>
       }
       different={
@@ -138,7 +138,7 @@ export function ChapterBuild() {
             />
             <button type="submit" disabled={!canBuild} className={cn(BTN_PRIMARY, "h-11 px-5 text-[15px]")}>
               {going ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Hammer className="size-4" aria-hidden />}
-              {going ? "Opening the factory…" : "Build it"}
+              {going ? "Warming up the garage…" : "Build it"}
             </button>
             <p className="text-[12.5px] text-stone-500">
               Opens the live build in about 30 seconds of work. A pill at the bottom brings you back to this chapter.

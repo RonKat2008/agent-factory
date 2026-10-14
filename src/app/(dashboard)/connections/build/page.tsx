@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowLeft, Blocks, Code2, Globe } from "lucide-react";
 
-export const metadata: Metadata = { title: "Build a connector · Agent Factory" };
+export const metadata: Metadata = { title: "Build a connector · Pitcrew" };
 
 const LABEL = "font-mono text-[11px] uppercase tracking-[0.12em] text-stone-500";
 const PANEL = "rounded-[3px] border border-stone-300 bg-[#FBFAF7] p-4 shadow-[0_1px_0_rgba(0,0,0,0.04)]";
@@ -52,7 +52,7 @@ export default function BuildConnectorPage() {
         <Link href="/connections" className="inline-flex w-fit items-center gap-1 text-[13px] text-stone-600 hover:text-stone-900">
           <ArrowLeft className="size-3.5" aria-hidden /> Connections
         </Link>
-        <p className={LABEL}>Developers · extend the factory</p>
+        <p className={LABEL}>Developers · extend Pitcrew</p>
         <h1 className="text-[28px] font-semibold tracking-tight text-stone-900">Build a connector</h1>
         <p className="max-w-[68ch] text-[14px] text-stone-600">
           Agents are JSON specs made of blocks. There are two ways to give them a new capability: add a <strong className="font-semibold text-stone-800">community connector</strong> from the
@@ -81,7 +81,7 @@ export default function BuildConnectorPage() {
             </div>
             <ul className="mt-2 flex list-disc flex-col gap-1 pl-5 text-[13px] text-stone-700">
               <li>A remote MCP server URL (Streamable HTTP, e.g. <span className="font-mono">https://mcp.deepwiki.com/mcp</span>) and an optional bearer token.</li>
-              <li>On save the factory runs <span className="font-mono">initialize</span> and <span className="font-mono">tools/list</span>; every tool becomes an action.</li>
+              <li>On save Pitcrew runs <span className="font-mono">initialize</span> and <span className="font-mono">tools/list</span>; every tool becomes an action.</li>
               <li>At run time the agent calls <span className="font-mono">tools/call</span> with the step&apos;s args.</li>
             </ul>
           </article>
@@ -104,7 +104,7 @@ export default function BuildConnectorPage() {
         </div>
         <p className="max-w-[72ch] text-[13px] text-stone-700">
           Use a block when the capability needs custom logic, typed params or its own tests. Three edits: the block file, a spec union entry, and a registry entry.
-          Blocks never throw. Return <span className="font-mono">ok(output)</span> or <span className="font-mono">fail(&quot;precise error&quot;)</span> so the factory can test and repair agents that use it.
+          Blocks never throw. Return <span className="font-mono">ok(output)</span> or <span className="font-mono">fail(&quot;precise error&quot;)</span> so Pitcrew can test and repair agents that use it.
         </p>
         <ol className="flex flex-col gap-3">
           <li className="flex flex-col gap-1.5">

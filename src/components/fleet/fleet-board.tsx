@@ -60,7 +60,7 @@ export function FleetBoard() {
         <StatStrip stats={stats} />
         {error && (
           <p role="alert" className="rounded-[3px] border border-red-300 bg-red-50 px-3 py-2 text-[13px] text-red-800">
-            Can&rsquo;t reach the factory right now ({error}). Showing what we saw last.
+            Can&rsquo;t reach Pitcrew right now ({error}). Showing what we saw last.
           </p>
         )}
       </header>

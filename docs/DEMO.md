@@ -1,4 +1,6 @@
-# Demo script (3:00)
+# Pitcrew demo script (3:00)
+
+**Why Pitcrew:** built at an event with an F1 team, so we leaned in. Your agents get a pit crew: built, tested, running, and fixed in seconds when they break.
 
 Presenter: Ronit. Persona: Maya, ops lead at a 10-person startup. Have these tabs open: My agents (home), Tour, Slack (the demo channel), and the Outbox. Before starting: Tour -> Reset, and confirm the Competitor watcher and Competitor deep-dive both show as live.
 
@@ -17,7 +19,7 @@ Say: "Acme just redesigned. The changelog URL now returns 404."
 Watch the repair steps: broke, repairing, tests passed, v2 live (about 8 seconds).
 Click: View diff on the new version.
 Say: "The URL changed and one test was added. Every failure becomes a test, so this exact break cannot ship twice. Nobody got paged."
-Show the Slack message ("I fixed X because Y") if it is posted.
+Show the Slack message ("🏁 Pit stop complete for X: Y") if it is posted. Say: "Pit stop: 8 seconds, back on track."
 
 ## 1:30 Publish, chain, deep-dive
 Click: Tour -> Publish.
@@ -35,7 +37,7 @@ Click: Home. Type "Every weekday at 9, post Hacker News stories about AI agents 
 Say: "A plan card and a Slack preview before anything runs." Click "Send me a test now" and show it land. Click Go live.
 Say: "It does not ship until the tests pass. Anyone can sign in with Slack and get this in their own channel."
 
-## 2:40 Ask Ops
+## 2:40 Team radio (Ask Ops)
 Press Cmd+K. Ask: "why did the watcher break?"
 Say: "That is the eve Fleet Ops agent. It reads run history, and anything that changes the fleet asks for approval."
 
@@ -47,5 +49,5 @@ Say: "Other tools help you build an agent. Ours takes responsibility for keeping
 - **Slack does not post:** open the Outbox. Every message is recorded there with its feedback links. Say so and continue.
 - **Repair does not finish in 15 seconds:** Tour -> Reset, then Break and run again once. If it fails again, switch to DEMO_MODE.
 - **Chain does not fire:** open the Competitor deep-dive and click Run now, then show the Graph flow view.
-- **Ask Ops does not respond:** skip it and go to the close; the Fleet Ops health check is at https://agent-factory-ops.vercel.app/eve/v1/health.
+- **Team radio does not respond:** skip it and go to the close; the Fleet Ops health check is at https://agent-factory-ops.vercel.app/eve/v1/health.
 - **Anything else:** play the backup video (recorded by the teammate at 15:15).

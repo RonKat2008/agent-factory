@@ -53,9 +53,11 @@ function FactoryGlyph() {
   return (
     <svg viewBox="0 0 32 32" className="size-7" aria-hidden>
       <rect width="32" height="32" rx="3" fill="#1c1917" />
-      <path d="M5 25V14l6 3.5V14l6 3.5V9h4v16z" fill="#F6F4EF" />
-      <circle cx="24" cy="9" r="5" fill="#7c3aed" stroke="#F6F4EF" strokeWidth="1.5" />
-      <circle cx="24" cy="9" r="1.6" fill="#F6F4EF" />
+      <circle cx="16" cy="16" r="8.5" fill="none" stroke="#F6F4EF" strokeWidth="3.5" />
+      <circle cx="16" cy="16" r="2.2" fill="#F6F4EF" />
+      <path d="M8.5 23.5 19 13" stroke="#7c3aed" strokeWidth="3.2" strokeLinecap="round" />
+      <circle cx="21.4" cy="10.6" r="4" fill="#7c3aed" />
+      <path d="M21.6 5.6l4.8 4.8-1.9 1.9-4.8-4.8z" fill="#1c1917" />
     </svg>
   );
 }
@@ -295,11 +297,11 @@ export function TopBar() {
   return (
     <header className={cn("sticky top-0 z-20 border-b border-stone-300 bg-[#F6F4EF]/90 shadow-[0_1px_0_rgba(255,255,255,0.7)] backdrop-blur-md", working && "bar-shimmer")}>
       <div className="mx-auto flex h-14 w-full max-w-[1440px] items-center gap-2 px-3 sm:gap-4 sm:px-6">
-        <Link href="/" aria-label="Agent Factory home" className={cn("group flex shrink-0 items-center gap-2.5 rounded-[3px]", FOCUS_RING)}>
-          <span className="transition-transform duration-200 group-hover:-rotate-6 group-active:scale-95">
+        <Link href="/" aria-label="Pitcrew home" className={cn("group flex shrink-0 items-center gap-2.5 rounded-[3px]", FOCUS_RING)}>
+          <span className="transition-transform duration-200 group-hover:-rotate-12 group-active:scale-95">
             <FactoryGlyph />
           </span>
-          <span className="hidden font-mono text-[13px] font-semibold tracking-[0.2em] text-stone-900 lg:inline">AGENT FACTORY</span>
+          <span className="hidden font-mono text-[13px] font-semibold tracking-[0.2em] text-stone-900 lg:inline">PITCREW</span>
         </Link>
         <nav aria-label="Main" className="flex min-w-0 items-center gap-0.5 sm:gap-1">
           {MAIN.map((n) => (

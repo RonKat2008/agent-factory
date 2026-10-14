@@ -87,7 +87,7 @@ const CARDS: Card[] = [
     art: <BuildArt />,
     body: (
       <>
-        The factory assembles the agent, does a <Term id="dry-run">test run</Term> on real data, and fixes anything that fails before you ever see it.
+        Pitcrew assembles the agent, does a <Term id="dry-run">test run</Term> on real data, and fixes anything that fails before you ever see it.
       </>
     ),
   },

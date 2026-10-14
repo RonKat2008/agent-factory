@@ -35,7 +35,7 @@ export const GLOSSARY = {
   "dry-run": {
     term: "Test run",
     plain: "A practice run on real data that doesn't send anything to anyone.",
-    why: "The factory checks the agent works before it is ever allowed to post for real.",
+    why: "Pitcrew checks the agent works before it is ever allowed to post for real.",
   },
   tests: {
     term: "Tests",
@@ -44,12 +44,12 @@ export const GLOSSARY = {
   },
   repair: {
     term: "Auto-repair",
-    plain: "When a run breaks (say a website moved a page), the factory finds the cause, patches the agent and re-tests it, with no human needed.",
+    plain: "When a run breaks (say a website moved a page), Pitcrew finds the cause, patches the agent and re-tests it, with no human needed. Like a pit stop: in and back out in seconds.",
     why: "Your agents keep working while you're away, and you get a note explaining the fix.",
   },
   "regression-test": {
     term: "Regression test",
-    plain: "A new test the factory adds after a repair, checking for the exact failure it just fixed.",
+    plain: "A new test Pitcrew adds after a repair, checking for the exact failure it just fixed.",
     why: "The same problem can't sneak back in a later version.",
   },
   chain: {
@@ -113,7 +113,7 @@ export const GLOSSARY = {
     why: "Click one to see which agents mention it and when.",
   },
   "fleet-ops": {
-    term: "Ask Ops",
+    term: "Team radio",
     plain: "A chat assistant that knows about all your agents. Ask \"what broke today?\" or \"which agent costs the most?\".",
     why: "Get answers about your agents without digging through pages.",
   },

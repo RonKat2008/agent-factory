@@ -64,7 +64,7 @@ function SteerTry() {
         </div>
         <div className="rounded-[3px] border border-stone-300 bg-white p-3.5">
           <p className="flex items-center gap-2 text-[14px] font-semibold text-stone-900"><ThumbsDown className="size-4 text-red-600" aria-hidden /> Feedback becomes a fix</p>
-          <p className="mt-1 text-[13.5px] leading-relaxed text-stone-600">Every Slack post has 👍 and 👎 links. A 👎 makes the factory propose a new version that addresses it, tested, waiting for you to accept.</p>
+          <p className="mt-1 text-[13.5px] leading-relaxed text-stone-600">Every Slack post has 👍 and 👎 links. A 👎 makes Pitcrew propose a new version that addresses it, tested, waiting for you to accept.</p>
         </div>
       </div>
     </div>

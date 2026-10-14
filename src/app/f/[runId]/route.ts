@@ -8,7 +8,7 @@ const esc = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`)
 
 function page(title: string, body: string, status = 200): Response {
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>${esc(title)} · Agent Factory</title>
+<title>${esc(title)} · Pitcrew</title>
 <style>
 :root{color-scheme:light}
 body{margin:0;min-height:100vh;display:grid;place-items:center;background:#F6F4EF;color:#1c1917;font:16px/1.5 ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;padding:16px;box-sizing:border-box}
@@ -20,7 +20,7 @@ button{margin-top:12px;background:#1c1917;color:#fff;border:0;border-radius:10px
 button:hover{background:#44403c}button:disabled{opacity:.5;cursor:default}
 .brand{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#a8a29e;margin-bottom:14px}
 #status{margin-top:10px;font-size:14px;color:#57534e}
-</style></head><body><main><div class="brand">Agent Factory</div>${body}</main></body></html>`;
+</style></head><body><main><div class="brand">Pitcrew</div>${body}</main></body></html>`;
   return new Response(html, { status, headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" } });
 }
 
@@ -37,7 +37,7 @@ document.getElementById("f").addEventListener("submit", async function (e) {
   try {
     var r = await fetch("/api/feedback", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ runId: ${JSON.stringify(runId)}, rating: "not_useful", comment: c }) });
     if (!r.ok) throw new Error((await r.json()).error || r.status);
-    st.textContent = "Got it — the factory will use this to improve the agent.";
+    st.textContent = "Got it — Pitcrew will use this to improve the agent.";
   } catch (err) { st.textContent = "Could not send: " + err.message; btn.disabled = false; }
 });
 </script>`;
@@ -67,5 +67,5 @@ export async function GET(request: Request, ctx: { params: Promise<{ runId: stri
   }
   return r === "useful"
     ? page("Thanks", "<h1>Thanks — noted.</h1><p>Glad it was useful. The agent keeps doing what it's doing.</p>")
-    : page("Thanks", `<h1>Thanks — noted.</h1><p>Sorry it missed. Tell us what to change and the factory will propose an edit.</p>${commentForm(runId)}`);
+    : page("Thanks", `<h1>Thanks — noted.</h1><p>Sorry it missed. Tell us what to change and Pitcrew will propose an edit.</p>${commentForm(runId)}`);
 }

@@ -266,7 +266,7 @@ export const outbox: OutboxMessage[] = [
     id: "o1",
     agentId: agents[1].id,
     runId: okRun.id,
-    body: "🔧 I fixed *Competitor watcher: Acme*: the changelog moved to /updates (old URL 404). Shipped v2 with a regression test.",
+    body: "🏁 Pit stop complete for *Competitor watcher: Acme*: the changelog moved to /updates (old URL 404). Shipped v2 with a regression test.",
     sentOk: true,
     createdAt: ago(2),
   },

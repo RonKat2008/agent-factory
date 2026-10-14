@@ -65,7 +65,7 @@ function RepairDemo() {
   const needsReset = Boolean(snap?.acme.broken) && t.startedAt === null;
   const latestRepair = useLatestRepair(watcher?.id ?? null, needsReset);
   const repairPost = t.repaired && t.startedAt
-    ? (t.outbox.find((m) => Date.parse(m.createdAt) >= Date.parse(t.startedAt!) - SKEW_MS && /I fixed/.test(m.body)) ?? null)
+    ? (t.outbox.find((m) => Date.parse(m.createdAt) >= Date.parse(t.startedAt!) - SKEW_MS && /I fixed|Pit stop complete/.test(m.body)) ?? null)
     : null;
   const diagnosis = t.repaired?.message.replace(/^Fixed:\s*/, "").replace(/\.?\s*Shipped v\d+.*$/, "") ?? "";
   const repairedId = t.repaired?.id ?? null;
@@ -164,9 +164,10 @@ function RepairDemo() {
             <p className="flex items-center gap-2 text-[18px] font-semibold text-violet-900">
               <PartyPopper className="size-5" aria-hidden />
               <span>
-                <Term id="repair">Fixed</Term> in{" "}
-                <NumberTicker className="font-mono tabular-nums" value={Math.max(1, Math.round(t.elapsedMs / 1000))} from={0} format={(n) => `${Math.round(n)}s`} />, no human involved
+                <Term id="repair">Pit stop</Term>:{" "}
+                <NumberTicker className="font-mono tabular-nums" value={Math.max(1, Math.round(t.elapsedMs / 1000))} from={0} format={(n) => `${Math.round(n)}s`} /> — back on track, no human involved
               </span>
+              <span className="chequer" aria-hidden />
             </p>
             <p className="text-[13.5px] leading-relaxed text-stone-700">
               <span className={LABEL}>what went wrong</span><br />
@@ -185,7 +186,7 @@ function RepairDemo() {
 
       {t.stuck && (
         <div role="alert" className="rounded-[3px] border border-red-300 border-l-4 border-l-red-600 bg-red-50 p-4">
-          <p className="flex items-center gap-2 font-semibold text-red-800"><Wrench className="size-4" aria-hidden /> The factory could not fix this one on its own</p>
+          <p className="flex items-center gap-2 font-semibold text-red-800"><Wrench className="size-4" aria-hidden /> Pitcrew could not fix this one on its own</p>
           <p className="mt-1 text-[13.5px] text-red-900">{t.stuck.message}</p>
           <p className="mt-1 text-[12.5px] text-stone-600">That is the honest outcome: it escalates to a human instead of guessing. Reset and try again.</p>
         </div>
@@ -215,7 +216,7 @@ export function ChapterRepair() {
       title="It fixes itself"
       lede={
         <p>
-          Websites change and automations break silently. Press the button to redesign Acme&apos;s site out from under a live agent. The factory notices the failure, works out why, patches the agent, re-runs its tests, and only then ships the fix. Usually in under a minute.
+          Websites change and automations break silently. Press the button to redesign Acme&apos;s site out from under a live agent. Pitcrew notices the failure, works out why, patches the agent, re-runs its tests, and only then ships the fix. Usually in under a minute.
         </p>
       }
       different={

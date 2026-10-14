@@ -118,7 +118,7 @@ export function AgentCard({ agent: a, now }: { agent: Agent; now: number }) {
             title={`${a.repairs} automatic fix${a.repairs === 1 ? "" : "es"} · last ${fullTime(repairedAt)}`}
           >
             <Wrench className="size-3" aria-hidden />
-            <Term id="repair" className="text-white">Repaired</Term>
+            <Term id="repair" className="text-white">Pit stop</Term>
             <span className="font-mono tabular-nums">{relTime(repairedAt, now)}</span>
           </span>
         )}

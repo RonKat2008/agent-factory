@@ -38,7 +38,7 @@ export function POST(request: NextRequest): Promise<Response> {
     const input = parsed.data;
     const limited = await rateLimit("connector", { key: clientIp(request), perKey: { max: 3, windowSec: 600 }, global: { max: 30, windowSec: 3600 } });
     if (limited) return limited;
-    if ((await countCustomConnectors()) >= MAX_CONNECTORS) return jsonError(`The factory already has ${MAX_CONNECTORS} community connectors; ask an admin to remove one`, 409);
+    if ((await countCustomConnectors()) >= MAX_CONNECTORS) return jsonError(`Pitcrew already has ${MAX_CONNECTORS} community connectors; ask an admin to remove one`, 409);
 
     const secret = input.secret.trim() || null;
     let actions: ConnectorAction[] = input.kind === "http" ? input.actions : [];

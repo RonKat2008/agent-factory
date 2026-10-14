@@ -7,7 +7,7 @@ import { rateLimit } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
-const TEST_PREFIX = "🧪 Test from Agent Factory —";
+const TEST_PREFIX = "🧪 Test from Pitcrew —";
 
 export function POST(_req: Request, ctx: { params: Promise<{ id: string }> }): Promise<Response> {
   return guard("POST /api/agents/:id/test-send", async () => {

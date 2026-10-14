@@ -35,7 +35,7 @@ export function FleetEmpty() {
       <div className="space-y-1.5">
         <h2 className="text-[20px] font-semibold tracking-tight text-stone-900">No agents yet</h2>
         <p className="max-w-sm text-[14px] text-stone-600">
-          Describe a job in one sentence and the factory builds it for you.
+          Describe a job in one sentence and Pitcrew builds it for you.
         </p>
       </div>
       <div className="flex flex-wrap items-center justify-center gap-2">

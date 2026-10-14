@@ -17,9 +17,9 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
-  title: "Agent Factory",
+  title: "Pitcrew",
   description:
-    "Other tools help you build an agent. Ours takes responsibility for keeping it working.",
+    "Your AI agents get a pit crew. Other tools help you build an agent. Pitcrew takes responsibility for keeping it running.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

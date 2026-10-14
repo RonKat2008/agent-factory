@@ -239,7 +239,7 @@ async function shipStep(ctx: RepairCtx, attempt: Attempt): Promise<number | null
     await logEvent(ctx.agentId, "tests_passed", `Patched spec passed ${attempt.testsPassed}/${attempt.testsTotal} tests on a dry run`, data);
     await logEvent(ctx.agentId, "repaired", `Fixed: ${attempt.diagnosis}. Shipped v${version} with +1 regression test.`, data);
     await postFactoryMessage(
-      `🔧 I fixed *${ctx.agentName}*: ${attempt.diagnosis}. Shipped v${version} (+1 regression test). <${appUrl()}/agents/${ctx.agentId}|See the diff>`,
+      `🏁 Pit stop complete for *${ctx.agentName}*: ${attempt.diagnosis}. Shipped v${version} (+1 regression test). <${appUrl()}/agents/${ctx.agentId}|See the diff>`,
       ctx.agentId,
     );
     return version;
@@ -268,7 +268,7 @@ async function needsHumanStep(agentId: string, reason: string): Promise<void> {
     await updateAgent(agentId, { status: "needs_human" });
     await logEvent(agentId, "needs_human", `Couldn't fix it automatically: ${reason}`, { reason });
     await postFactoryMessage(
-      `⚠️ I couldn't fix *${agent?.name ?? "an agent"}*: ${reason}. <${appUrl()}/agents/${agentId}|Take a look>`,
+      `🚩 Pitcrew needs you: couldn't fix *${agent?.name ?? "an agent"}* — ${reason}. <${appUrl()}/agents/${agentId}|Take a look>`,
       agentId,
     );
   } catch (e) {

@@ -5,7 +5,7 @@ export type ChapterMeta = { id: ChapterId; title: string; short: string };
 
 export const CHAPTERS: readonly ChapterMeta[] = [
   { id: "build", title: "Build an agent from one sentence", short: "Build from a sentence" },
-  { id: "repair", title: "It fixes itself", short: "It fixes itself" },
+  { id: "repair", title: "Pit stop: it fixes itself", short: "Pit stop" },
   { id: "chain", title: "Chain reaction", short: "Agents trigger agents" },
   { id: "graph", title: "See the whole system", short: "See the system" },
   { id: "steer", title: "Steer it in plain English", short: "Steer in plain English" },

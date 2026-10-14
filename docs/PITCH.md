@@ -1,8 +1,12 @@
-# Agent Factory: Devpost submission text
+# Pitcrew: Devpost submission text
 
-**Name:** Agent Factory
+**Name:** Pitcrew
 
-**Tagline:** Other tools help you build an agent. Ours takes responsibility for keeping it working.
+**Tagline:** Your AI agents get a pit crew.
+
+**Pitch line:** Other tools help you build an agent. Pitcrew takes responsibility for keeping it running.
+
+**Why Pitcrew:** built at an event with an F1 team, so we leaned in. Your agents get a pit crew: built, tested, running, and fixed in seconds when they break.
 
 **Track:** Agents & Factories
 
@@ -10,9 +14,9 @@
 
 ## Description (under 200 words)
 
-Agent Factory turns one sentence into a recurring agent that stays working. Describe a job, such as "every weekday, tell #product what our competitors shipped". The factory plans it, assembles it from a fixed library of tested blocks, dry-runs it against real sources, writes tests, and posts to Slack only after the tests pass. You see a Slack preview and can send yourself a test before going live.
+Pitcrew turns one sentence into a recurring agent that stays working. Describe a job, such as "every weekday, tell #product what our competitors shipped". Pitcrew plans it, assembles it from a fixed library of tested blocks, dry-runs it against real sources, writes tests, and posts to Slack only after the tests pass. You see a Slack preview and can send yourself a test before going live.
 
-When a source changes and a run breaks, the factory diagnoses the failure, patches the spec, re-tests, and promotes a new version in about 8 seconds. Every failure becomes a regression test, so the same break cannot ship twice. A thumbs-down on a post, or an English instruction like "only posts with 100+ points", becomes a proposed edit that is re-tested first.
+When a source changes and a run breaks, Pitcrew diagnoses the failure, patches the spec, re-tests, and promotes a new version in about 8 seconds. Every failure becomes a regression test, so the same break cannot ship twice. A thumbs-down on a post, or an English instruction like "only posts with 100+ points", becomes a proposed edit that is re-tested first.
 
 Agents can trigger other agents: our competitor watcher fires a deep-dive agent that researches the release with Exa. Every post feeds a fleet knowledge graph that agents can recall. You can ask the eve-based Fleet Ops agent "why did the watcher break?" with Cmd+K. Anyone can sign in with Slack, add their own connectors (HTTP or MCP), and export an agent as an eve project. A run costs about $0.0003.
 
@@ -26,7 +30,7 @@ Every agent builder helps you make the first version. Nobody owns version two hu
 - Ships only if tests pass (test-gated delivery). If only the LLM judge fails, the post is held, not sent.
 - Runs on a schedule, repairs itself when a step fails, and adds a regression test for each failure.
 - Chains agents: one agent's post triggers another. Entities from every post build a fleet knowledge graph, shown on the Graph page alongside the agent flow.
-- Steering: English edits, approval gates, thumbs-down feedback to a proposed fix, and Ask Ops chat with approvals.
+- Steering: English edits, approval gates, thumbs-down feedback to a proposed fix, and Team radio (Ask Ops) chat with approvals.
 - Connect: Sign in with Slack (posts go to the visitor's own channel), custom HTTP and MCP connectors (Exa, Kernel, Context7, DeepWiki connected), a Vercel Sandbox `run_code` block, and Export as eve agent.
 - A public judge Tour lets anyone break a site and watch the repair.
 

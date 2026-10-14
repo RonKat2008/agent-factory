@@ -56,7 +56,7 @@ function Row({ e, now, showAgent }: { e: FeedEvent; now: number; showAgent: bool
       <Icon className={cn("size-3.5", s.color, s.spin && "motion-safe:animate-spin")} aria-hidden />
     </span>
   );
-  const name = e.agentName ?? "The factory";
+  const name = e.agentName ?? "Pitcrew";
   return (
     <div className="relative flex gap-3 py-2.5 pl-1 pr-3">
       <span aria-hidden className="absolute bottom-0 left-[17px] top-0 w-px bg-stone-200" />

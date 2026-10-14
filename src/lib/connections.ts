@@ -108,7 +108,7 @@ export async function sendSlackTest(webhook: string): Promise<{ ok: boolean; err
     const res = await fetch(webhook, {
       method: "POST",
       headers: { "content-type": "application/json" },
-      body: JSON.stringify({ text: "✅ Agent Factory connected" }),
+      body: JSON.stringify({ text: "✅ Pitcrew connected" }),
       signal: AbortSignal.timeout(8_000),
     });
     return res.ok ? { ok: true } : { ok: false, error: `Slack returned ${res.status}` };

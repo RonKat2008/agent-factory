@@ -92,7 +92,7 @@ export function OpsPanel({ open, onClose, items, status, agents, mac, onSend, on
   return (
     <>
       <div onClick={onClose} aria-hidden className={cn("fixed inset-0 z-40 bg-stone-900/25 transition-opacity duration-200 motion-reduce:transition-none", open ? "opacity-100" : "pointer-events-none opacity-0")} />
-      <motion.aside ref={panelRef} role="dialog" aria-modal="true" aria-label="Ask Ops" aria-hidden={!open} inert={!open}
+      <motion.aside ref={panelRef} role="dialog" aria-modal="true" aria-label="Team radio" aria-hidden={!open} inert={!open}
         initial={false}
         animate={open ? { x: 0, opacity: 1 } : { x: "100%", opacity: 0 }}
         transition={SPRING.gentle}
@@ -102,8 +102,8 @@ export function OpsPanel({ open, onClose, items, status, agents, mac, onSend, on
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60 motion-reduce:animate-none" />
             <span className="relative inline-flex size-2 rounded-full bg-emerald-500" />
           </span>
-          <h2 className="text-[15px] font-semibold text-stone-900">Fleet Ops</h2>
-          <span className="rounded-[2px] border border-stone-300 bg-stone-100 px-1.5 py-px font-mono text-[10.5px] text-stone-500">Powered by eve</span>
+          <h2 className="text-[15px] font-semibold text-stone-900">Team radio</h2>
+          <span className="rounded-[2px] border border-stone-300 bg-stone-100 px-1.5 py-px font-mono text-[10.5px] text-stone-500">Fleet Ops · powered by eve</span>
           <div className="ml-auto flex items-center gap-1">
             <button type="button" onClick={onReset} disabled={!items.length} title="New chat" aria-label="New chat"
               className={cn("grid size-8 place-items-center rounded-[3px] text-stone-500 hover:bg-stone-200/70 hover:text-stone-900 disabled:opacity-40", FOCUS)}><RotateCcw className="size-4" /></button>
@@ -118,7 +118,7 @@ export function OpsPanel({ open, onClose, items, status, agents, mac, onSend, on
             {items.length === 0 ? (
               <div className="my-auto">
                 <h3 className="text-[22px] font-semibold leading-tight text-stone-900">Ask anything about your agents</h3>
-                <p className="mt-2 max-w-[44ch] text-[14px] leading-relaxed text-stone-600">Try &ldquo;what broke today?&rdquo; <Term id="fleet-ops">Ask Ops</Term> can look into agents, explain failures, run them, pause them and edit them. It always asks for your OK before changing anything.</p>
+                <p className="mt-2 max-w-[44ch] text-[14px] leading-relaxed text-stone-600">Your race engineer is on the radio. Try &ldquo;what broke today?&rdquo; <Term id="fleet-ops">Team radio</Term> can look into agents, explain failures, run them, pause them and edit them. It always asks for your OK before changing anything.</p>
                 <ul className="mt-5 grid gap-2 sm:grid-cols-2">
                   {SUGGESTIONS.map((s) => <li key={s} className="flex"><Chip label={s} onClick={() => send(s)} disabled={busy} /></li>)}
                 </ul>

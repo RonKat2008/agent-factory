@@ -1,4 +1,6 @@
-# Teammate guide: demo and submission
+# Pitcrew teammate guide: demo and submission
+
+**Why Pitcrew:** built at an event with an F1 team, so we leaned in. Your agents get a pit crew: built, tested, running, and fixed in seconds when they break.
 
 Your role is demo and submission: you present or back up the demo, own the Devpost submission, record the backup video, and click-test the deployed app. Ronit and Claude handle the code.
 

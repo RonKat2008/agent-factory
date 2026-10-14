@@ -1,6 +1,6 @@
 import { ImageResponse } from "next/og";
 
-export const alt = "Agent Factory: agents that keep themselves working";
+export const alt = "Pitcrew: your AI agents get a pit crew";
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
 
@@ -33,18 +33,20 @@ export default function OpengraphImage() {
         <div style={{ display: "flex", alignItems: "center" }}>
           <svg width="56" height="56" viewBox="0 0 32 32">
             <rect width="32" height="32" rx="4" fill="#1c1917" />
-            <path d="M5 25V14l6 3.5V14l6 3.5V9h4v16z" fill="#F6F4EF" />
-            <circle cx="24" cy="9" r="5" fill="#7c3aed" stroke="#F6F4EF" strokeWidth="1.5" />
-            <circle cx="24" cy="9" r="1.6" fill="#F6F4EF" />
+            <circle cx="16" cy="16" r="8.5" fill="none" stroke="#F6F4EF" strokeWidth="3.5" />
+            <circle cx="16" cy="16" r="2.2" fill="#F6F4EF" />
+            <path d="M8.5 23.5 19 13" stroke="#7c3aed" strokeWidth="3.2" strokeLinecap="round" />
+            <circle cx="21.4" cy="10.6" r="4" fill="#7c3aed" />
+            <path d="M21.6 5.6l4.8 4.8-1.9 1.9-4.8-4.8z" fill="#1c1917" />
           </svg>
           <div style={{ marginLeft: 20, fontSize: 30, fontWeight: 700, letterSpacing: 8, fontFamily: "monospace" }}>
-            AGENT FACTORY
+            PITCREW
           </div>
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", fontSize: 68, fontWeight: 700, lineHeight: 1.08, letterSpacing: -2 }}>
           <div style={{ color: "#78716c" }}>Other tools help you build an agent.</div>
-          <div>Ours takes responsibility for keeping it working.</div>
+          <div>Pitcrew takes responsibility for keeping it running.</div>
         </div>
 
         <div style={{ display: "flex", alignItems: "center", fontFamily: "monospace", fontSize: 28 }}>
@@ -56,7 +58,7 @@ export default function OpengraphImage() {
               {i < STEPS.length - 1 && <div style={{ margin: "0 14px", color: "#a8a29e" }}>→</div>}
             </div>
           ))}
-          <div style={{ marginLeft: 24, color: "#7c3aed", fontWeight: 700 }}>· 8s</div>
+          <div style={{ marginLeft: 24, color: "#7c3aed", fontWeight: 700 }}>· pit stop 8s</div>
         </div>
       </div>
     ),
