@@ -4,21 +4,28 @@ import { getGithubDefaultRepo, getGithubToken } from "@/lib/connections";
 type GhIssue = { number: number; title: string; html_url: string; body?: string | null; created_at?: string; labels?: ({ name?: string } | string)[]; pull_request?: unknown };
 const BODY_CAP = 1000;
 
-async function gh(path: string, token: string, init: RequestInit = {}): Promise<Response> {
+async function gh(path: string, token: string | null, init: RequestInit = {}): Promise<Response> {
   return fetch(`https://api.github.com${path}`, {
     ...init,
     signal: AbortSignal.timeout(10_000),
-    headers: { accept: "application/vnd.github+json", authorization: `Bearer ${token}`, "user-agent": "agent-factory", "content-type": "application/json", ...(init.headers ?? {}) },
+    headers: {
+      accept: "application/vnd.github+json", "user-agent": "agent-factory", "content-type": "application/json",
+      ...(token ? { authorization: `Bearer ${token}` } : {}), ...(init.headers ?? {}),
+    },
   });
 }
 
 export const githubIssues: BlockRunner = async (params, ctx) => {
-  const token = await getGithubToken();
-  if (!token) return fail("GitHub is not connected; connect it on /connections (or set GITHUB_TOKEN)");
-  const repo = String(params?.repo || (await getGithubDefaultRepo()) || "");
+  const defaultRepo = await getGithubDefaultRepo();
+  const repo = String(params?.repo || defaultRepo || "");
   if (!/^[\w.-]+\/[\w.-]+$/.test(repo)) return fail(`github_issues: repo must be "owner/name", got "${repo}"`);
+  // Specs come from anonymous prompts: the owner's token is used only on the repo saved with the
+  // GitHub connection. Other repos are read anonymously (public data) and never written to.
+  const trusted = !!defaultRepo && repo.toLowerCase() === defaultRepo.toLowerCase();
+  const token = trusted ? await getGithubToken() : null;
 
   if (params?.action === "label") {
+    if (!trusted || !token) return fail(`github_issues label: only the connected repo (${defaultRepo ?? "none, connect GitHub on /connections"}) can be labelled`);
     let input = params.input;
     if (typeof input === "string") {
       try { input = JSON.parse(input); } catch { return fail("github_issues label: input is not valid JSON"); }

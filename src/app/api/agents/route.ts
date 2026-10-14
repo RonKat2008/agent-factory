@@ -2,6 +2,7 @@ import { guard, json, jsonError } from "@/lib/api-util";
 import { start } from "workflow/api";
 import { z } from "zod";
 import { createAgent, listAgents, logEvent, updateAgent } from "@/lib/repo";
+import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { buildAgentWorkflow } from "@/workflows/build-agent";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,8 @@ export function POST(req: Request): Promise<Response> {
     const parsed = BodySchema.safeParse(await req.json().catch(() => null));
     if (!parsed.success) return jsonError("request must be 8-600 characters", 400);
     const { request } = parsed.data;
+    const limited = await rateLimit("build", { key: clientIp(req), perKey: { max: 5, windowSec: 600 }, global: { max: 30, windowSec: 3600 } });
+    if (limited) return limited;
     const agentId = await createAgent({ name: "New agent", request, schedule: DEFAULT_SCHEDULE, status: "building", requiresApproval: false });
     try {
       await start(buildAgentWorkflow, [{ agentId, request }]);
