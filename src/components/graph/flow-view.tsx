@@ -211,8 +211,8 @@ export function FlowView({ graph, selectedId, onSelect, fires }: Props) {
   const pick = (id: string) => onSelect(id === selectedId ? null : id);
 
   return (
-    <div ref={wrapRef} className="relative isolate h-full overflow-y-auto overflow-x-hidden p-4 sm:p-7">
-      <svg aria-hidden className="pointer-events-none absolute left-0 top-0 z-0 hidden h-full w-full overflow-visible lg:block">
+    <div ref={wrapRef} className="@container relative isolate h-full overflow-y-auto overflow-x-hidden p-4 sm:p-7">
+      <svg aria-hidden className="pointer-events-none absolute left-0 top-0 z-0 hidden h-full w-full overflow-visible @2xl:block">
         <defs>
           <filter id="flow-glow" x="-20%" y="-20%" width="140%" height="140%">
             <feGaussianBlur stdDeviation="5" />
@@ -270,7 +270,7 @@ export function FlowView({ graph, selectedId, onSelect, fires }: Props) {
         </motion.g>
       </svg>
 
-      <div className="relative z-10 grid gap-8 lg:min-h-full lg:grid-cols-[minmax(170px,210px)_minmax(0,1fr)_minmax(170px,210px)] lg:gap-x-[clamp(56px,9vw,128px)]">
+      <div className="relative z-10 grid gap-8 @2xl:min-h-full @2xl:grid-cols-[minmax(112px,150px)_minmax(0,1fr)_minmax(112px,150px)] @2xl:gap-x-10 @4xl:grid-cols-[minmax(170px,210px)_minmax(0,1fr)_minmax(170px,210px)] @4xl:gap-x-[clamp(56px,9vw,128px)]">
         <section aria-label="Where agents get their information" className="flex flex-col justify-center gap-3">
           <ColumnLabel>Where they look</ColumnLabel>
           {model.sources.length === 0 && <p className="px-1 text-[13px] text-stone-500">No outside sources yet.</p>}
@@ -287,7 +287,7 @@ export function FlowView({ graph, selectedId, onSelect, fires }: Props) {
           ))}
         </section>
 
-        <section aria-label="Your agents" className="mx-auto flex w-full max-w-[420px] flex-col justify-center gap-10 lg:max-w-none">
+        <section aria-label="Your agents" className="mx-auto flex w-full max-w-[420px] flex-col justify-center gap-10 @2xl:max-w-none">
           <ColumnLabel>Your agents</ColumnLabel>
           {model.agents.map((n, i) => {
             const meta = n.node?.meta;
@@ -308,7 +308,7 @@ export function FlowView({ graph, selectedId, onSelect, fires }: Props) {
                     <Sparkline runs={meta?.recent ?? []} />
                   </span>
                   {(srcs.length > 0 || dsts.length > 0) && (
-                    <span className="mt-3 flex flex-wrap gap-x-1.5 border-t border-white/10 pt-2.5 text-[11.5px] text-stone-400 lg:hidden">
+                    <span className="mt-3 flex flex-wrap gap-x-1.5 border-t border-white/10 pt-2.5 text-[11.5px] text-stone-400 @2xl:hidden">
                       {srcs.length > 0 && <span>Reads {srcs.join(", ")}</span>}
                       {dsts.length > 0 && <span>{srcs.length > 0 ? "· " : ""}posts to {dsts.join(", ")}</span>}
                     </span>
