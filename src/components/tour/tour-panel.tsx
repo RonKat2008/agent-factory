@@ -68,6 +68,8 @@ export function TourPanel() {
   const diagnosis = t.repaired?.message.replace(/^Fixed:\s*/, "").replace(/\.?\s*Shipped v\d+.*$/, "") ?? "";
   const running = t.startedAt !== null && !t.repaired && !t.stuck;
   const status = watcherStatus(t.events, watcher?.status ?? "live", t.startedAt !== null);
+  // Acme is already redesigned but this page has no run in progress: the demo needs a reset before it can break again.
+  const needsReset = Boolean(snap?.acme.broken) && t.startedAt === null;
   const repairedId = t.repaired?.id ?? null;
 
   useEffect(() => {
@@ -104,10 +106,10 @@ export function TourPanel() {
           <div className="min-w-0 space-y-3 sm:max-w-[420px]">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-[15px] font-semibold text-stone-900">{watcher?.name ?? "Competitor watcher"}</p>
-              <StatusMorph status={status} />
+              {watcher && <StatusMorph status={watcher.status} />}
             </div>
             <p className="text-[14px] leading-relaxed text-stone-600">
-              Acme is a fake competitor. This agent has been watching its changelog all day and posting what&apos;s new to Slack. Right now it&apos;s working fine.
+              Acme is a fake competitor. This agent has been watching its changelog all day and posting what&apos;s new to Slack.{watcher?.status === "live" ? " Right now it's working fine." : ""}
             </p>
           </div>
           <AcmePreview refreshKey={t.previewKey} broken={snap ? snap.acme.broken : null} />
@@ -119,6 +121,18 @@ export function TourPanel() {
           <p className="max-w-[60ch] text-[14px] leading-relaxed text-stone-600">
             Acme will &quot;redesign&quot;: the changelog moves to a new URL and the old one returns 404. Our watcher still points at the old address, so it breaks. Then the factory notices, diagnoses it, and <Term id="repair">fixes</Term> it.
           </p>
+          {needsReset ? (
+            <div className="space-y-2 rounded-[3px] border border-stone-300 bg-stone-50 p-4">
+              <p className="text-[14px] font-semibold text-stone-900">
+                {watcher?.status === "live" ? "Acme already redesigned, and the watcher is fixed and live." : "Acme has already redesigned."}
+              </p>
+              <p className="text-[13.5px] text-stone-600">Reset the demo to try again.</p>
+              <button type="button" disabled={busy} onClick={() => void t.act("reset")} className={BTN_SECONDARY}>
+                {t.pending === "reset" ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <RotateCcw className="size-3.5" aria-hidden />}
+                Reset the demo
+              </button>
+            </div>
+          ) : (
           <button
             type="button"
             disabled={busy || !watcher}
@@ -128,6 +142,7 @@ export function TourPanel() {
             {t.pending === "break" ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Hammer className="size-4" aria-hidden />}
             {t.pending === "break" ? "Breaking…" : "Break Acme's website"}
           </button>
+          )}
           {cool("break")}
         </div>
 

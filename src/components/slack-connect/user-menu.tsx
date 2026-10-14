@@ -49,6 +49,8 @@ export function UserMenu({ className }: { className?: string }) {
 
   if (isLoading) return <span className={cn("inline-block h-9 w-32 animate-pulse rounded-[4px] bg-stone-200", className)} aria-hidden />;
   if (!me?.user) {
+    // Unconfigured Slack: nothing in the top bar (the create flow and /connections show the hint).
+    if (me && !me.slackOAuth.configured) return null;
     return (
       <>
         <SlackOAuthNotice />

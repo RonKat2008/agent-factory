@@ -11,6 +11,7 @@ const FEED_POLL_MS = 1500;
 const OUTBOX_POLL_MS = 2500;
 const STORE_KEY = "af-tour-run";
 const SKEW_MS = 1500;
+const MAX_RESTORE_AGE_MS = 3 * 60 * 1000;
 
 type Stored = { startedAt: string; publishedAt?: string };
 const readStore = (): Stored | null => {
@@ -55,7 +56,10 @@ export function useTour() {
 
   useEffect(() => {
     const stored = readStore();
-    if (stored) queueMicrotask(() => {
+    const age = stored ? Date.now() - Date.parse(stored.startedAt) : Infinity;
+    const isFresh = stored !== null && Number.isFinite(age) && age >= 0 && age < MAX_RESTORE_AGE_MS;
+    if (stored && !isFresh) writeStore(null);
+    if (stored && isFresh) queueMicrotask(() => {
       setStartedAt(stored.startedAt);
       setPublishedAt(stored.publishedAt ?? null);
       setClientStart(Date.parse(stored.startedAt));
@@ -68,6 +72,11 @@ export function useTour() {
   const repaired = events.find((e) => e.type === "repaired") ?? null;
   const stuck = events.find((e) => e.type === "needs_human") ?? null;
   const settled = repaired !== null || stuck !== null;
+
+  // A finished run must not be restored on the next visit.
+  useEffect(() => {
+    if (settled) writeStore(null);
+  }, [settled]);
 
   useEffect(() => {
     if (!watcherId || !startedAt || settled) return;
