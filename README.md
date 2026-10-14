@@ -2,7 +2,7 @@
 
 > Other tools help you build an agent. Ours takes responsibility for keeping it working.
 
-**Live demo: TBD**
+**Live demo: **https://agent-factory-steel.vercel.app** — start with **Tour** (60 seconds: break a competitor site, watch the factory repair its own agent)**
 
 Describe a recurring job in one sentence and Agent Factory builds the agent, writes its tests, ships it only if the tests pass, runs it on a schedule, and repairs it when it breaks. Agents are JSON specs assembled from a fixed block library, so every build, edit, and repair is a versioned, testable diff rather than generated code. The failure that triggered a repair becomes a permanent regression test, and thumbs-down feedback on a Slack post becomes a proposed edit to the agent.
 
