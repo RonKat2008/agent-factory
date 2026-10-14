@@ -3,6 +3,7 @@
 import { RotateCcw } from "lucide-react";
 import { useEffect, useState, type ReactNode } from "react";
 import { cn } from "@/lib/utils";
+import { LayoutList } from "@/components/motion";
 import { FOCUS } from "../ui-tokens";
 import { ApprovalCard } from "./approval-card";
 import type { ChatItem } from "./events";
@@ -96,13 +97,20 @@ export function Transcript({ items, status, agents, onAnswer, onRetry }: {
   const thinking = working && (last?.kind === "user" || (last?.kind === "tool" && last.status === "done") || last?.kind === "approval");
   return (
     <div className="flex flex-col gap-5">
-      {turns.map((t, n) =>
-        t.kind === "user" ? (
-          <div key={t.item.id} className="ml-10 self-end whitespace-pre-wrap break-words rounded-[3px] bg-stone-900 px-3 py-2 text-[14px] leading-snug text-[#F6F4EF]">{t.item.text}</div>
-        ) : (
-          <OpsTurn key={t.items[0].id} items={t.items} streamingId={streamingId} agents={agents} onAnswer={onAnswer} onRetry={onRetry} canRetry={status === "idle" && n === turns.length - 1} />
-        ),
-      )}
+      <LayoutList
+        as="div"
+        enterFrom="bottom"
+        className="flex flex-col gap-5"
+        items={turns}
+        getKey={(t) => (t.kind === "user" ? t.item.id : t.items[0].id)}
+        renderItem={(t, n) =>
+          t.kind === "user" ? (
+            <div className="ml-auto w-fit max-w-[calc(100%-2.5rem)] whitespace-pre-wrap break-words rounded-[3px] bg-stone-900 px-3 py-2 text-[14px] leading-snug text-[#F6F4EF]">{t.item.text}</div>
+          ) : (
+            <OpsTurn items={t.items} streamingId={streamingId} agents={agents} onAnswer={onAnswer} onRetry={onRetry} canRetry={status === "idle" && n === turns.length - 1} />
+          )
+        }
+      />
       {thinking && <Thinking />}
     </div>
   );

@@ -386,7 +386,7 @@ export function GraphCanvas({ graph, selectedId, onSelect }: Props) {
           </li>
         ))}
       </ul>
-      <div className="absolute right-3 top-3 flex flex-col overflow-hidden rounded-[3px] border border-stone-300 bg-[#FBFAF7] shadow-[0_1px_0_rgba(0,0,0,0.04)]">
+      <div className="absolute right-3 top-3 flex flex-col overflow-hidden rounded-[3px] border border-white/10 bg-[#18181b]/90 backdrop-blur">
         <CtlButton label="Zoom in" onClick={() => zoomBy(1.3)}>
           <Plus className="size-4" />
         </CtlButton>
@@ -408,7 +408,7 @@ function CtlButton({ label, onClick, children }: { label: string; onClick: () =>
       aria-label={label}
       title={label}
       onClick={onClick}
-      className="flex size-8 items-center justify-center text-stone-700 transition-colors hover:bg-stone-200/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-stone-900/40 active:bg-stone-200 [&+&]:border-t [&+&]:border-stone-300"
+      className="flex size-8 items-center justify-center text-stone-300 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-violet-400/60 active:bg-white/15 [&+&]:border-t [&+&]:border-white/10"
     >
       {children}
     </button>

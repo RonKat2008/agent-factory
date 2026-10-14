@@ -112,6 +112,11 @@ export function GET(): Promise<Response> {
           lastOutput: a.lastOutput?.message ?? null,
           health: a.health,
           schedule: a.scheduleHuman,
+          does: a.plan?.does ?? null,
+          sendsTo: a.plan?.sendsTo ?? null,
+          recent: (a.recent ?? []).map((r) => ({ status: r.status, at: r.startedAt })),
+          lastSentAt: a.lastOutput?.at ?? null,
+          requiresApproval: a.requiresApproval,
         },
       });
     });

@@ -12,6 +12,15 @@ export type GraphNodeMeta = {
   lastSeen?: string;
   slug?: string;
   builtin?: boolean;
+  /** Agent: plain-English "what it does" (plan.does). */
+  does?: string | null;
+  /** Agent: where it posts (plan.sendsTo), e.g. "#product". */
+  sendsTo?: string | null;
+  /** Agent: last 20 non-dry runs, oldest to newest. */
+  recent?: { status: string; at: string }[];
+  /** Agent: when it last posted something. */
+  lastSentAt?: string | null;
+  requiresApproval?: boolean;
 };
 
 export type GraphNodeDto = {

@@ -2,6 +2,9 @@
 
 import { ArrowDown, RotateCcw, X } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
+import { motion } from "motion/react";
+import { Term } from "@/components/explain";
+import { SPRING } from "@/components/motion/tokens";
 import { cn } from "@/lib/utils";
 import { FOCUS } from "../ui-tokens";
 import { Composer } from "./composer";
@@ -11,10 +14,9 @@ import { Transcript } from "./transcript";
 import type { ChatStatus } from "./use-ops-chat";
 
 export const SUGGESTIONS = [
-  "Why did the Acme watcher break today?",
-  "Which agent is the most useful?",
-  "What did the fleet learn this week?",
-  "Make the release assistant only flag security issues",
+  "What broke today?",
+  "Which agent costs the most?",
+  "What did my agents learn about Acme?",
 ];
 
 const GENERIC_FOLLOW_UPS = ["List the agents and their health", "What got repaired in the last 24 hours?", "Which agent is the most useful?"];
@@ -90,8 +92,11 @@ export function OpsPanel({ open, onClose, items, status, agents, mac, onSend, on
   return (
     <>
       <div onClick={onClose} aria-hidden className={cn("fixed inset-0 z-40 bg-stone-900/25 transition-opacity duration-200 motion-reduce:transition-none", open ? "opacity-100" : "pointer-events-none opacity-0")} />
-      <aside ref={panelRef} role="dialog" aria-modal="true" aria-label="Ask Ops" aria-hidden={!open} inert={!open}
-        className={cn("fixed inset-y-0 right-0 z-50 flex w-[min(560px,100vw)] flex-col border-l border-stone-400 bg-[#FBFAF7] shadow-[-8px_0_24px_rgba(28,25,23,0.10)] transition-transform duration-200 ease-out motion-reduce:transition-none", open ? "translate-x-0" : "translate-x-full")}>
+      <motion.aside ref={panelRef} role="dialog" aria-modal="true" aria-label="Ask Ops" aria-hidden={!open} inert={!open}
+        initial={false}
+        animate={open ? { x: 0, opacity: 1 } : { x: 24, opacity: 0 }}
+        transition={SPRING.gentle}
+        className={cn("fixed inset-y-0 right-0 z-50 flex w-[min(560px,100vw)] flex-col border-l border-stone-400 bg-[#FBFAF7] shadow-[-8px_0_24px_rgba(28,25,23,0.10)]", !open && "pointer-events-none")}>
         <header className="flex shrink-0 items-center gap-3 border-b border-stone-300 bg-[#FBFAF7] px-4 py-3">
           <span className="relative flex size-2 shrink-0" aria-hidden>
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-emerald-500 opacity-60 motion-reduce:animate-none" />
@@ -112,8 +117,8 @@ export function OpsPanel({ open, onClose, items, status, agents, mac, onSend, on
             className="flex h-full flex-col overflow-y-auto px-4 py-5">
             {items.length === 0 ? (
               <div className="my-auto">
-                <h3 className="text-[22px] font-semibold leading-tight text-stone-900">Ask your fleet anything</h3>
-                <p className="mt-2 max-w-[44ch] text-[14px] leading-relaxed text-stone-600">Fleet Ops can inspect agents, explain failures, run them, pause them and edit them. It always asks for your approval before changing anything.</p>
+                <h3 className="text-[22px] font-semibold leading-tight text-stone-900">Ask anything about your agents</h3>
+                <p className="mt-2 max-w-[44ch] text-[14px] leading-relaxed text-stone-600">Try &ldquo;what broke today?&rdquo; <Term id="fleet-ops">Ask Ops</Term> can look into agents, explain failures, run them, pause them and edit them. It always asks for your OK before changing anything.</p>
                 <ul className="mt-5 grid gap-2 sm:grid-cols-2">
                   {SUGGESTIONS.map((s) => <li key={s} className="flex"><Chip label={s} onClick={() => send(s)} disabled={busy} /></li>)}
                 </ul>
@@ -138,7 +143,7 @@ export function OpsPanel({ open, onClose, items, status, agents, mac, onSend, on
         </div>
 
         <Composer status={status} focusSignal={open} mac={mac} lockedUntil={lockedUntil} onSend={send} onStop={onStop} />
-      </aside>
+      </motion.aside>
     </>
   );
 }

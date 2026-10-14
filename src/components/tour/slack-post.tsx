@@ -15,7 +15,7 @@ function mrkdwn(text: string): ReactNode[] {
 
 export function SlackPost({ message, label }: { message: OutboxMessage; label: string }) {
   return (
-    <figure className="feed-row-enter overflow-hidden rounded-[3px] border border-stone-300 bg-white">
+    <figure className="overflow-hidden rounded-[3px] border border-stone-300 bg-white">
       <figcaption className="flex items-center gap-2 border-b border-stone-200 bg-stone-50 px-3 py-1.5 font-mono text-[11px] text-stone-500">
         <span aria-hidden className="size-2 rounded-[2px] bg-violet-600" />
         {label}

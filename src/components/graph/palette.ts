@@ -24,9 +24,9 @@ export const STATUS_COLORS: Record<AgentStatus, string> = {
 };
 export const WORKING_STATUSES = new Set<AgentStatus>(["repairing", "building", "testing"]);
 
-export const INK = "#1c1917";
-export const INK_SOFT = "#57534e";
-export const SURFACE = "#FBFAF7";
-export const PAGE = "#F6F4EF";
-export const VIOLET = "#7c3aed";
-export const STONE_EDGE = "#a8a29e";
+export const INK = "#f5f5f4";
+export const INK_SOFT = "#a8a29e";
+export const SURFACE = "#18181b";
+export const PAGE = "#0E0E10";
+export const VIOLET = "#a78bfa";
+export const STONE_EDGE = "#57534e";

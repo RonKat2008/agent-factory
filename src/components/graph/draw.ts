@@ -1,3 +1,4 @@
+import { DURATION } from "@/components/motion/tokens";
 import type { Sim, SimNode } from "./sim";
 import { INK, INK_SOFT, kindColor, PAGE, STATUS_COLORS, STONE_EDGE, SURFACE, VIOLET, WORKING_STATUSES } from "./palette";
 
@@ -20,8 +21,9 @@ export type DrawState = {
   fonts: { sans: string; mono: string };
 };
 
-export const PULSE_MS = 1800;
-export const FLASH_MS = 1400;
+/** A chain firing: the dot travels the edge, then the downstream node gets one expanding ring. */
+export const PULSE_MS = Math.round(DURATION.crawl * 1000 * 1.6);
+export const FLASH_MS = Math.round(DURATION.slow * 1000 * 2.2);
 
 function hexPath(ctx: CanvasRenderingContext2D, x: number, y: number, r: number): void {
   ctx.beginPath();
@@ -42,7 +44,7 @@ function squarePath(ctx: CanvasRenderingContext2D, x: number, y: number, r: numb
 }
 
 function haloText(ctx: CanvasRenderingContext2D, text: string, y: number): void {
-  ctx.lineWidth = 3;
+  ctx.lineWidth = 4;
   ctx.strokeStyle = PAGE;
   ctx.lineJoin = "round";
   ctx.strokeText(text, 0, y);
@@ -53,11 +55,14 @@ function clip(s: string, n: number): string {
   return s.length > n ? `${s.slice(0, n - 1)}…` : s;
 }
 
-function showEntityLabel(n: SimNode, s: DrawState): boolean {
+/** Entities that always get a label: the most-mentioned ones. Others label on hover or zoom. */
+const TOP_LABELS = 14;
+
+function showEntityLabel(n: SimNode, s: DrawState, top: Set<string>): boolean {
   if (n.id === s.hoverId || n.id === s.selectedId) return true;
   if (s.neighbors?.has(n.id)) return true;
-  if (s.view.k > 1.5) return true;
-  return n.weight >= 4 && s.view.k > 0.75;
+  if (s.view.k > 1.6) return true;
+  return top.has(n.id);
 }
 
 export function draw(ctx: CanvasRenderingContext2D, sim: Sim, s: DrawState): void {
@@ -67,7 +72,7 @@ export function draw(ctx: CanvasRenderingContext2D, sim: Sim, s: DrawState): voi
 
   // dot grid in screen space
   const step = Math.max(14, 28 * view.k);
-  ctx.fillStyle = "rgba(120,113,108,0.22)";
+  ctx.fillStyle = "rgba(168,162,158,0.10)";
   const ox = ((view.x % step) + step) % step;
   const oy = ((view.y % step) + step) % step;
   for (let gx = ox; gx < width; gx += step) for (let gy = oy; gy < height; gy += step) ctx.fillRect(gx, gy, 1.2, 1.2);
@@ -96,6 +101,16 @@ export function draw(ctx: CanvasRenderingContext2D, sim: Sim, s: DrawState): voi
     ctx.lineTo(tx, ty);
     if (e.type === "trigger") {
       ctx.setLineDash([]);
+      const firing = s.pulses.find((p) => p.edgeId === e.id && s.now >= p.start && s.now - p.start < PULSE_MS);
+      if (firing) {
+        // the whole edge glows while the dot is travelling, fading as it arrives
+        const k = 1 - (s.now - firing.start) / PULSE_MS;
+        ctx.strokeStyle = `rgba(124,58,237,${0.28 * k})`;
+        ctx.lineWidth = 3 + 9 * k;
+        ctx.lineCap = "round";
+        ctx.stroke();
+        ctx.lineCap = "butt";
+      }
       ctx.strokeStyle = VIOLET;
       ctx.lineWidth = 3;
       ctx.stroke();
@@ -199,10 +214,10 @@ export function draw(ctx: CanvasRenderingContext2D, sim: Sim, s: DrawState): voi
         ctx.stroke();
       }
       ctx.fillStyle = INK;
-      ctx.font = `600 13px ${s.fonts.mono}`;
+      ctx.font = `600 15px ${s.fonts.sans}`;
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(String(n.meta?.health ?? ""), n.x, n.y + 0.5);
+      ctx.fillText(n.label.trim().charAt(0).toUpperCase(), n.x, n.y + 0.5);
     }
   }
   ctx.globalAlpha = 1;
@@ -220,11 +235,18 @@ export function draw(ctx: CanvasRenderingContext2D, sim: Sim, s: DrawState): voi
   }
 
   // labels (constant screen size)
+  const top = new Set(
+    nodes
+      .filter((n) => n.type === "entity")
+      .sort((a, b) => b.weight - a.weight)
+      .slice(0, TOP_LABELS)
+      .map((n) => n.id),
+  );
   const inv = 1 / view.k;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
   for (const n of nodes) {
-    if (n.type === "entity" && !showEntityLabel(n, s)) continue;
+    if (n.type === "entity" && !showEntityLabel(n, s, top)) continue;
     ctx.globalAlpha = lit(n.id) ? 1 : 0.22;
     ctx.save();
     ctx.translate(n.x, n.y + n.r + (n.type === "agent" ? 8 : 4));

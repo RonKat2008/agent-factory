@@ -4,6 +4,7 @@ import { useState, type ComponentType, type FormEvent } from "react";
 import { ExternalLink, Loader2, Lock, Send, Unplug } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { Pulse } from "@/components/motion";
 import { disconnect, saveConnection, testConnection, type ConnectionStatus, type Provider } from "./api";
 import { BTN_DANGER, BTN_PRIMARY, BTN_SECONDARY, ConnPill, INPUT, LABEL, relTime } from "./parts";
 
@@ -35,6 +36,7 @@ export function ConnectableCard({ def, status, isUnlocked, onChange }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
+  const [testOk, setTestOk] = useState(0);
 
   const isConnected = !!status?.connected;
   const pill = !status ? "not_connected" : status.via === "env" ? "env" : isConnected ? "connected" : "not_connected";
@@ -77,6 +79,7 @@ export function ConnectableCard({ def, status, isUnlocked, onChange }: Props) {
     const r = await run("test", () => testConnection(def.provider));
     if (!r) return;
     onChange(r.connection);
+    setTestOk((n) => n + 1);
     toast.success(def.provider === "slack" ? "Test message sent to Slack" : "GitHub access confirmed");
   }
 
@@ -96,9 +99,12 @@ export function ConnectableCard({ def, status, isUnlocked, onChange }: Props) {
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-[17px] font-semibold tracking-tight text-stone-900">{def.title}</h2>
-            <ConnPill state={pill} />
+            <Pulse trigger={testOk} tone="emerald">
+              <ConnPill state={pill} />
+            </Pulse>
           </div>
           <p className="mt-1 text-[13px] leading-snug text-stone-600">{def.description}</p>
+          {!isConnected ? <p className="mt-1 text-[12.5px] text-stone-500">Connect once, and any agent can use it.</p> : null}
         </div>
       </header>
 

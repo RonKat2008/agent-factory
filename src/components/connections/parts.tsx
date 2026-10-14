@@ -4,7 +4,7 @@ export type PillState = "connected" | "not_connected" | "ready" | "env";
 
 const PILL: Record<PillState, { label: string; dot: string; text: string }> = {
   connected: { label: "Connected", dot: "bg-emerald-500", text: "text-emerald-800 bg-emerald-50 border-emerald-200" },
-  env: { label: "Connected · env", dot: "bg-emerald-500", text: "text-emerald-800 bg-emerald-50 border-emerald-200" },
+  env: { label: "Connected (built in)", dot: "bg-emerald-500", text: "text-emerald-800 bg-emerald-50 border-emerald-200" },
   not_connected: { label: "Not connected", dot: "bg-stone-400", text: "text-stone-600 bg-stone-100 border-stone-200" },
   ready: { label: "Ready", dot: "bg-sky-600", text: "text-sky-900 bg-sky-50 border-sky-300" },
 };

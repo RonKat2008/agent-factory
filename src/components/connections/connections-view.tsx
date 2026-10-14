@@ -4,6 +4,8 @@ import { useEffect, useState, type ComponentType, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowUpRight, GitBranch, Hash, KeyRound, Loader2, LockOpen, Network, Newspaper, PackageOpen, Rss, SquareTerminal } from "lucide-react";
 import { toast } from "sonner";
+import { Term } from "@/components/explain";
+import { Stagger, StaggerItem } from "@/components/motion";
 import { getConnections, getUnlocked, lock, unlock, type ConnectionStatus, type Provider } from "./api";
 import { CommunityConnectors } from "./community-connectors";
 import { ConnectableCard, type ConnectableDef } from "./connectable-card";
@@ -86,10 +88,12 @@ export function ConnectionsView() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-4 border-b border-stone-300 pb-5 md:flex-row md:items-end md:justify-between">
         <div className="min-w-0">
-          <p className={LABEL}>Factory · credentials</p>
-          <h1 className="mt-1 text-[28px] font-semibold tracking-tight text-stone-900">Connections</h1>
-          <p className="mt-1 max-w-[60ch] text-[14px] text-stone-600">
-            What your agents can reach. Credentials are encrypted at rest and used only by agents at run time; they never come back to the browser.
+          <h1 className="t-title text-[28px]">Connections</h1>
+          <p className="mt-1.5 max-w-[60ch] text-[15px] leading-relaxed text-stone-600">
+            Apps and data your agents can use. Each one is a <Term id="connector">connector</Term>.
+          </p>
+          <p className="mt-1 max-w-[60ch] text-[13px] text-stone-500">
+            Passwords and keys are encrypted and only used when an agent runs. They never come back to the browser.
           </p>
           <Link href="/connections/build" className="mt-2 inline-flex items-center gap-1 text-[13px] text-stone-700 underline decoration-stone-300 underline-offset-2 hover:text-stone-900 hover:decoration-stone-900">
             Build a connector: HTTP, MCP or a first-class block <ArrowUpRight className="size-3.5" aria-hidden />
@@ -101,7 +105,7 @@ export function ConnectionsView() {
               {isLoading ? "–" : connectedCount + BUILTINS.length}
               <span className="text-stone-400">/{CONNECTABLE.length + BUILTINS.length}</span>
             </div>
-            <div className={`${LABEL} mt-1`}>available</div>
+            <div className={`${LABEL} mt-1`}>ready to use</div>
           </div>
           <UnlockControl isUnlocked={isUnlocked} onChange={setIsUnlocked} />
         </div>
@@ -110,27 +114,31 @@ export function ConnectionsView() {
       {loadError ? <p role="alert" className="text-[13px] text-red-600">Couldn&apos;t load connections: {loadError}</p> : null}
 
       <section aria-labelledby="connectable-heading" className="flex flex-col gap-3">
-        <h2 id="connectable-heading" className={LABEL}>Accounts · connect once, every agent can use them</h2>
-        <div className="grid grid-cols-1 gap-3 lg:grid-cols-2">
+        <h2 id="connectable-heading" className="text-[15px] font-semibold text-stone-900">Your accounts</h2>
+        <Stagger gap="normal" className="grid grid-cols-1 gap-4 lg:grid-cols-2">
           {CONNECTABLE.map((def) =>
             isLoading ? (
               <div key={def.provider} className="h-[248px] animate-pulse rounded-[3px] border border-stone-300 bg-[#FBFAF7]" />
             ) : (
-              <ConnectableCard key={def.provider} def={def} status={connections[def.provider] ?? null} isUnlocked={isUnlocked} onChange={update} />
+              <StaggerItem key={def.provider}>
+                <ConnectableCard def={def} status={connections[def.provider] ?? null} isUnlocked={isUnlocked} onChange={update} />
+              </StaggerItem>
             ),
           )}
-        </div>
+        </Stagger>
       </section>
 
       <CommunityConnectors />
 
       <section aria-labelledby="builtin-heading" className="flex flex-col gap-3">
-        <h2 id="builtin-heading" className={LABEL}>Built in · no setup</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <h2 id="builtin-heading" className="text-[15px] font-semibold text-stone-900">Built in, no setup needed</h2>
+        <Stagger gap="tight" className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {BUILTINS.map((b) => (
-            <BuiltinCard key={b.title} item={b} />
+            <StaggerItem key={b.title}>
+              <BuiltinCard item={b} />
+            </StaggerItem>
           ))}
-        </div>
+        </Stagger>
       </section>
     </div>
   );

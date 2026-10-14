@@ -6,7 +6,9 @@ import { getAgents, getOutbox } from "@/lib/api-client";
 import type { OutboxMessage } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fullTime, relTime } from "@/components/time";
-import { LABEL, PANEL } from "@/components/ui-tokens";
+import { BTN_PRIMARY, LABEL, PANEL } from "@/components/ui-tokens";
+import { Term } from "@/components/explain";
+import { FadeIn, LayoutList } from "@/components/motion";
 import { renderSlack } from "@/components/slack-message";
 
 const POLL_MS = 5000;
@@ -18,6 +20,23 @@ function dayLabel(iso: string, now: number): string {
   if (diff === 0) return "Today";
   if (diff === 1) return "Yesterday";
   return d.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" });
+}
+
+function EmptyOutbox() {
+  return (
+    <div className={`${PANEL} flex flex-col items-center gap-4 px-6 py-14 text-center`}>
+      <svg width="120" height="84" viewBox="0 0 120 84" fill="none" aria-hidden>
+        <path d="M14 46h28l6 12h24l6-12h28" stroke="#78716c" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M14 46 28 14h64l14 32v26a4 4 0 0 1-4 4H18a4 4 0 0 1-4-4Z" stroke="#78716c" strokeWidth="2.5" strokeLinejoin="round" />
+        <path d="M60 4v14M52 12l8-8 8 8" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" strokeDasharray="3 5" />
+      </svg>
+      <div className="space-y-1.5">
+        <p className="text-[17px] font-semibold text-stone-900">Nothing sent yet</p>
+        <p className="max-w-[40ch] text-[14px] leading-relaxed text-stone-600">When your agents post, every message shows up here.</p>
+      </div>
+      <Link href="/fleet" className={`${BTN_PRIMARY} h-11 px-5 text-[15px]`}>See my agents</Link>
+    </div>
+  );
 }
 
 function groupByDay(messages: OutboxMessage[], now: number) {
@@ -61,13 +80,13 @@ export function OutboxView() {
   }, []);
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4">
-      <div>
-        <h1 className="t-title">Outbox</h1>
+    <div className="mx-auto w-full max-w-3xl space-y-6 py-2">
+      <FadeIn>
+        <h1 className="t-title"><Term id="outbox">Outbox</Term></h1>
         <p className="t-lede mt-2 max-w-[60ch]">
-          Every message the fleet sent to Slack, in order. Same content, even if Slack is down.
+          Every message your agents sent, and the ones <Term id="held-post">waiting for your OK</Term>.
         </p>
-      </div>
+      </FadeIn>
       {error && (
         <p role="alert" className="rounded-[3px] border border-red-300 bg-red-50 px-3 py-2 font-mono text-xs text-red-800">
           Connection problem: {error}. Showing last known data.
@@ -80,7 +99,7 @@ export function OutboxView() {
           ))}
         </div>
       ) : messages.length === 0 ? (
-        <p className={`${PANEL} px-3 py-10 text-center text-sm text-stone-500`}>No messages sent yet.</p>
+        <EmptyOutbox />
       ) : (
         <div className="space-y-5">
           {groupByDay(messages, now).map((g) => (
@@ -89,11 +108,16 @@ export function OutboxView() {
                 <span className="rounded-full border border-stone-300 bg-[#FBFAF7] px-3 py-0.5 text-[12px] font-semibold text-stone-800">{g.label}</span>
                 <span className="h-px flex-1 bg-stone-300" aria-hidden />
               </h2>
-              <ol className={`${PANEL} divide-y divide-stone-200`}>
-                {g.items.map((m) => {
+              <LayoutList
+                as="ol"
+                enterFrom="top"
+                className={`${PANEL} divide-y divide-stone-200`}
+                items={g.items}
+                getKey={(m) => m.id}
+                renderItem={(m) => {
                   const name = m.agentId ? (names[m.agentId] ?? m.agentId.slice(0, 8)) : "Agent Factory";
                   return (
-                    <li key={m.id} className="group flex min-w-0 gap-3 px-3 py-3 transition-colors hover:bg-white">
+                    <div className="group flex min-w-0 gap-3 px-4 py-4 transition-colors hover:bg-white">
                       <span
                         className="grid size-9 shrink-0 place-items-center rounded-[4px] bg-stone-900 font-mono text-[15px] font-semibold uppercase text-[#F6F4EF]"
                         aria-hidden
@@ -121,17 +145,17 @@ export function OutboxView() {
                             {new Date(m.createdAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })} · {relTime(m.createdAt, now)}
                           </time>
                           <span className={`ml-auto font-mono text-[11px] uppercase tracking-[0.12em] ${m.sentOk ? "text-emerald-600" : "text-red-600"}`}>
-                            {m.sentOk ? "delivered" : "failed"}
+                            {m.sentOk ? "Delivered" : "Didn't send"}
                           </span>
                         </div>
                         <p className="mt-0.5 whitespace-pre-wrap break-words text-[14px] leading-relaxed text-stone-800">
                           {renderSlack(m.body)}
                         </p>
                       </div>
-                    </li>
+                    </div>
                   );
-                })}
-              </ol>
+                }}
+              />
             </section>
           ))}
         </div>
