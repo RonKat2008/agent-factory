@@ -1,8 +1,9 @@
 "use client";
 
+import type { ReactNode } from "react";
 import { cn } from "@/lib/utils";
 
-export type Destination = "team" | "own";
+export type Destination = "team" | "own" | "mine";
 export const TEAM_CHANNEL = "factory-demo";
 export const SLACK_WEBHOOK_RE = /^https:\/\/hooks\.slack\.com\/services\/[A-Za-z0-9_/-]+$/;
 
@@ -13,6 +14,10 @@ type Props = {
   onWebhook: (v: string) => void;
   hasSavedWebhook: boolean;
   disabled?: boolean;
+  /** The visitor's "Sign in with Slack" channel, when connected ("mine" replaces the team option). */
+  mySlack?: { channel: string; team: string } | null;
+  /** Primary Slack sign-in / status, rendered above the options. */
+  slackSlot?: ReactNode;
 };
 
 function Option({ on, label, hint, onSelect, disabled }: { on: boolean; label: string; hint: string; onSelect: () => void; disabled?: boolean }) {
@@ -39,14 +44,24 @@ function Option({ on, label, hint, onSelect, disabled }: { on: boolean; label: s
   );
 }
 
-export function SendTo({ destination, onDestination, webhook, onWebhook, hasSavedWebhook, disabled }: Props) {
+export function SendTo({ destination, onDestination, webhook, onWebhook, hasSavedWebhook, disabled, mySlack, slackSlot }: Props) {
   const invalid = destination === "own" && webhook.trim() !== "" && !SLACK_WEBHOOK_RE.test(webhook.trim());
   return (
     <fieldset className="flex flex-col gap-3" disabled={disabled}>
       <legend className="text-[15px] font-semibold text-stone-900">Where should it send?</legend>
+      {slackSlot}
       <div role="radiogroup" aria-label="Where should it send?" className="flex flex-col gap-2 sm:flex-row">
-        <Option on={destination === "team"} label={`Team channel (#${TEAM_CHANNEL})`} hint="Works right away" onSelect={() => onDestination("team")} />
-        <Option on={destination === "own"} label="My own Slack channel" hint="Takes about 2 minutes to set up" onSelect={() => onDestination("own")} />
+        {mySlack ? (
+          <Option on={destination === "mine"} label={`Your Slack (#${mySlack.channel})`} hint={`${mySlack.team} · signed in with Slack`} onSelect={() => onDestination("mine")} />
+        ) : (
+          <Option on={destination === "team"} label={`Team channel (#${TEAM_CHANNEL})`} hint="Works right away" onSelect={() => onDestination("team")} />
+        )}
+        <Option
+          on={destination === "own"}
+          label={mySlack ? "A different channel" : "Paste a webhook"}
+          hint="Takes about 2 minutes to set up"
+          onSelect={() => onDestination("own")}
+        />
       </div>
       {destination === "own" && (
         <div className="rounded-[4px] border border-stone-300 bg-white p-3">

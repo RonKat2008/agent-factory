@@ -22,6 +22,7 @@ import { PlanStep } from "./plan-step";
 import { PreviewStep } from "./preview-step";
 import { SendTo, SLACK_WEBHOOK_RE, TEAM_CHANNEL, type Destination } from "./send-to";
 import { TechDetails } from "./tech-details";
+import { ConnectSlackButton, SignInWithSlack, SlackOAuthNotice, useMe } from "@/components/slack-connect";
 import { type SchedulePick, describePick, pickToUtcCron, utcCronToPick } from "./schedule";
 import { MOCK_AGENT_ID, MOCK_MODE, simulateSnapshot } from "./simulate";
 
@@ -55,12 +56,17 @@ export function CreateFlow() {
   const [startedAt, setStartedAt] = useState(() => Date.now());
   const started = useRef<string | null>(null);
 
-  const [confirmed, setConfirmed] = useState(false);
+  // ?step=3 (back from "Sign in with Slack") resumes at the send step.
+  const [confirmed, setConfirmed] = useState(() => params.get("step") === "3");
   const [draftPick, setDraftPick] = useState<SchedulePick | null>(null);
   const [destination, setDestination] = useState<Destination>("team");
   const [webhook, setWebhook] = useState("");
   const [hasSavedWebhook, setHasSavedWebhook] = useState(false);
   const [busy, setBusy] = useState<null | "continue" | "test" | "on">(null);
+  const { me } = useMe();
+  const mySlack = me?.slack ?? null;
+  // Signed in with Slack: "your Slack" replaces the team channel as the default.
+  const dest: Destination = destination === "team" && mySlack ? "mine" : destination === "mine" && !mySlack ? "team" : destination;
 
   const status = detail?.agent.status ?? "building";
   const terminal = status === "ready" || status === "live" || status === "needs_human";
@@ -166,7 +172,7 @@ export function CreateFlow() {
   const applyDestination = async (): Promise<boolean> => {
     if (!agentId) return false;
     const url = webhook.trim();
-    if (destination === "own") {
+    if (dest === "own") {
       if (!url) {
         if (hasSavedWebhook) return true;
         toast.error("Paste your Slack webhook URL first, or choose the team channel.");
@@ -188,7 +194,7 @@ export function CreateFlow() {
     return true;
   };
 
-  const where = destination === "own" ? "your Slack channel" : `#${TEAM_CHANNEL}`;
+  const where = dest === "own" ? "your Slack channel" : dest === "mine" && mySlack ? `#${mySlack.channel}` : `#${TEAM_CHANNEL}`;
 
   const testNow = async () => {
     if (!agentId || busy) return;
@@ -307,12 +313,28 @@ export function CreateFlow() {
             spec={spec}
             run={dryRun}
             events={events}
-            channel={destination === "own" ? "your-channel" : TEAM_CHANNEL}
+            channel={dest === "own" ? "your-channel" : dest === "mine" && mySlack ? mySlack.channel : TEAM_CHANNEL}
             time={pick ? describePick(pick).replace(/^.* at /, "") : "9:00 AM"}
           />
           <div className="grid gap-5 rounded-[6px] border border-stone-300 bg-[#FBFAF7] p-4 sm:p-5">
+            <SlackOAuthNotice />
             <SendTo
-              destination={destination}
+              destination={dest}
+              mySlack={mySlack}
+              slackSlot={
+                agentId && me ? (
+                  mySlack ? (
+                    <ConnectSlackButton agentId={agentId} returnTo={`/new?agent=${agentId}&step=3`} />
+                  ) : (
+                    <div className="flex flex-col items-start gap-1.5">
+                      <SignInWithSlack size="lg" agentId={agentId} returnTo={`/new?agent=${agentId}&step=3`} isConfigured={me.slackOAuth.configured} />
+                      <p className="text-[12.5px] text-stone-500">
+                        {me.slackOAuth.configured ? "One click: sign in and pick the channel. Or choose below." : "Pick one of these for now."}
+                      </p>
+                    </div>
+                  )
+                ) : null
+              }
               onDestination={setDestination}
               webhook={webhook}
               onWebhook={setWebhook}

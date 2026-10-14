@@ -5,6 +5,8 @@ import { createAgent, listAgents, logEvent, updateAgent } from "@/lib/repo";
 import { clientIp, rateLimit } from "@/lib/rate-limit";
 import { setCreatedByIp } from "@/lib/repo-agent-settings";
 import { blockBots } from "@/lib/bot-guard";
+import { getOrCreateOwnerId } from "@/lib/visitor";
+import { setAgentOwner } from "@/lib/repo-visitor";
 import { buildAgentWorkflow } from "@/workflows/build-agent";
 
 export const dynamic = "force-dynamic";
@@ -27,6 +29,7 @@ export function POST(req: Request): Promise<Response> {
     if (limited) return limited;
     const agentId = await createAgent({ name: "New agent", request, schedule: DEFAULT_SCHEDULE, status: "building", requiresApproval: false });
     await setCreatedByIp(agentId, clientIp(req)).catch((e) => console.error("[agents] created_by_ip:", (e as Error).message));
+    await setAgentOwner(agentId, await getOrCreateOwnerId()).catch((e) => console.error("[agents] owner:", (e as Error).message));
     try {
       await start(buildAgentWorkflow, [{ agentId, request }]);
     } catch (e) {

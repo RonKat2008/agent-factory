@@ -158,3 +158,25 @@ create index if not exists kg_entities_last_seen_idx on kg_entities (last_seen d
 -- Per-agent Slack (bring your own webhook) + creator IP for the short post-create edit window.
 alter table agents add column if not exists slack_webhook_enc text;
 alter table agents add column if not exists created_by_ip text;
+
+-- "Add to Slack" OAuth: each anonymous visitor (af_uid cookie) can connect their own Slack channel.
+-- secret_enc is the AES-GCM-encrypted incoming-webhook URL; it is never returned by any route.
+create table if not exists visitor_connections (
+  visitor_id text not null,
+  provider text not null,
+  secret_enc text not null,
+  meta jsonb not null default '{}'::jsonb,
+  updated_at timestamptz not null default now(),
+  primary key (visitor_id, provider)
+);
+alter table agents add column if not exists owner_visitor_id text;
+
+-- "Sign in with Slack": one row per Slack user (id = "slack:<team_id>:<user_id>"). Owns agents via agents.owner_visitor_id.
+create table if not exists users (
+  id text primary key,
+  name text not null,
+  avatar_url text,
+  team_name text,
+  created_at timestamptz not null default now()
+);
+create index if not exists agents_owner_visitor_idx on agents (owner_visitor_id);

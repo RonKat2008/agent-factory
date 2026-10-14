@@ -2,6 +2,7 @@
 import { outboxInsert } from "@/lib/repo";
 import { getSlackWebhook } from "@/lib/connections";
 import { getAgentWebhook } from "@/lib/repo-agent-settings";
+import { getOwnerSlackWebhook } from "@/lib/repo-visitor";
 import { extractAndStore } from "@/lib/knowledge";
 
 const SLACK_TIMEOUT_MS = 8_000;
@@ -16,8 +17,9 @@ export function feedbackLine(runId: string): string {
 }
 
 async function postToSlack(text: string, agentId?: string | null): Promise<{ ok: boolean; error?: string } | null> {
-  // The agent's own Slack (bring-your-own webhook) wins over the team channel.
-  const webhook = (agentId ? await getAgentWebhook(agentId) : null) ?? (await getSlackWebhook());
+  // Precedence: the agent's own webhook → its owner's "Sign in with Slack" channel → the team channel/env.
+  const own = agentId ? ((await getAgentWebhook(agentId)) ?? (await getOwnerSlackWebhook(agentId))) : null;
+  const webhook = own ?? (await getSlackWebhook());
   if (!webhook) return null;
   try {
     const res = await fetch(webhook, {
