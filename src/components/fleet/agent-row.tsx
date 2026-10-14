@@ -9,7 +9,7 @@ import type { Agent, AgentStatus } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
 import { cn } from "@/lib/utils";
 import { HealthRing } from "./health-ring";
-import { relTime } from "./time";
+import { relTime } from "@/components/time";
 
 const STRIPE: Record<AgentStatus, string> = {
   live: "bg-emerald-500",

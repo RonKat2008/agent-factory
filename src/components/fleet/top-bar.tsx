@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 const NAV = [
   { href: "/", label: "Fleet" },
   { href: "/new", label: "New agent" },
+  { href: "/outbox", label: "Outbox" },
 ];
 
 function Clock() {

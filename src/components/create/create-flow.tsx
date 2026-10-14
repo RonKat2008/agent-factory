@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { Loader2, RotateCcw, Rocket } from "lucide-react";
 import { createAgent, getAgent, getFeed, goLive } from "@/lib/api-client";
 import type { AgentDetail, FeedEvent } from "@/lib/types";
+import { BTN_PRIMARY, BTN_SECONDARY, LABEL } from "@/components/ui-tokens";
 import { StatusPill } from "@/components/status-pill";
 import { PromptStage } from "./prompt-stage";
 import { PlanCard } from "./plan-card";
@@ -107,7 +108,7 @@ export function CreateFlow() {
 
   return (
     <div className="mx-auto w-full max-w-4xl px-4 py-8 sm:px-8 sm:py-10">
-      <p className="font-mono text-[11px] uppercase tracking-[0.12em] text-stone-500">New agent / 02 build</p>
+      <p className={LABEL}>New agent / 02 build</p>
       <blockquote className="mt-2 border-l-2 border-stone-900 pl-4 text-xl font-medium leading-snug text-stone-900 sm:text-2xl">
         “{request.trim()}”
       </blockquote>
@@ -130,7 +131,7 @@ export function CreateFlow() {
               type="button"
               onClick={publish}
               disabled={going}
-              className="inline-flex items-center gap-2 rounded-[3px] bg-stone-900 px-6 py-3 text-[14px] font-medium text-[#F6F4EF] hover:bg-stone-700 focus-visible:outline-none focus-visible:ring-2 ring-stone-900/40 disabled:opacity-50"
+              className={`${BTN_PRIMARY} h-10 px-6 text-[14px]`}
             >
               {going ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Rocket className="size-4" aria-hidden />}
               {going ? "Going live…" : "Go live"}
@@ -146,7 +147,7 @@ export function CreateFlow() {
             <button
               type="button"
               onClick={retry}
-              className="inline-flex w-fit items-center gap-2 rounded-[3px] border border-stone-900 px-4 py-2 text-[13px] font-medium text-stone-900 hover:bg-stone-900 hover:text-[#F6F4EF] focus-visible:outline-none focus-visible:ring-2 ring-stone-900/40"
+              className={`${BTN_SECONDARY} w-fit`}
             >
               <RotateCcw className="size-3.5" aria-hidden />
               Try again

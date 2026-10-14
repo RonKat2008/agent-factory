@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import { Factory } from "lucide-react";
 import { getAgents, getStats } from "@/lib/api-client";
 import type { Agent, Stats } from "@/lib/types";
+import { BTN_PRIMARY, LABEL } from "@/components/ui-tokens";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActivityFeed } from "@/components/feed/activity-feed";
 import { AgentRow } from "./agent-row";
@@ -50,7 +51,7 @@ export function FleetBoard() {
       )}
       <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
         <section aria-label="Agents" className="min-w-0">
-          <h2 className="mb-2 font-mono text-[11px] uppercase tracking-[0.12em] text-stone-500">
+          <h2 className={`mb-2 ${LABEL}`}>
             Fleet{agents ? ` · ${agents.length}` : ""}
           </h2>
           {agents === null ? (
@@ -65,7 +66,7 @@ export function FleetBoard() {
               <p className="text-sm text-stone-600">The floor is empty. Describe a job in plain English and the factory builds, tests and runs it.</p>
               <Link
                 href="/new"
-                className="inline-flex h-9 items-center rounded-[3px] bg-stone-900 px-4 text-sm text-[#F6F4EF] hover:bg-stone-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/40"
+                className={BTN_PRIMARY}
               >
                 Create your first agent
               </Link>

@@ -2,56 +2,17 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import {
-  AlertTriangle,
-  CheckCircle2,
-  CirclePause,
-  CirclePlay,
-  FlaskConical,
-  Hammer,
-  Hand,
-  Loader2,
-  Pencil,
-  Radio,
-  Rocket,
-  ShieldCheck,
-  ThumbsUp,
-  Wrench,
-  XCircle,
-  Zap,
-  type LucideIcon,
-} from "lucide-react";
+import { Radio } from "lucide-react";
 import { getFeed } from "@/lib/api-client";
-import type { EventType, FeedEvent } from "@/lib/types";
+import type { FeedEvent } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { clockTime, relTime } from "@/components/fleet/time";
+import { clockTime, relTime } from "@/components/time";
+import { eventStyle } from "@/components/event-style";
+import type { EventStyle } from "@/components/event-style";
+import { LABEL, PANEL } from "@/components/ui-tokens";
 
-type Style = { icon: LucideIcon; color: string; spin?: boolean; emphasis?: "repair" | "alarm" };
-
-const EMERALD = "text-emerald-600";
-const STYLES: Record<EventType, Style> = {
-  broke: { icon: XCircle, color: "text-red-600", emphasis: "repair" },
-  repairing: { icon: Loader2, color: "text-amber-600", spin: true, emphasis: "repair" },
-  repaired: { icon: Wrench, color: "text-violet-600", emphasis: "repair" },
-  test_failed: { icon: XCircle, color: "text-red-600" },
-  self_fixed: { icon: Zap, color: "text-violet-600" },
-  tests_passed: { icon: ShieldCheck, color: EMERALD },
-  run_succeeded: { icon: CheckCircle2, color: EMERALD },
-  went_live: { icon: Rocket, color: EMERALD },
-  run_failed: { icon: XCircle, color: "text-red-600" },
-  feedback: { icon: ThumbsUp, color: "text-stone-600" },
-  paused: { icon: CirclePause, color: "text-stone-500" },
-  resumed: { icon: CirclePlay, color: "text-stone-500" },
-  approval_needed: { icon: Hand, color: "text-amber-600" },
-  needs_human: { icon: AlertTriangle, color: "text-red-600", emphasis: "alarm" },
-  built: { icon: Hammer, color: "text-stone-600" },
-  dry_run: { icon: FlaskConical, color: "text-stone-600" },
-  edited: { icon: Pencil, color: "text-stone-600" },
-  proposed: { icon: Pencil, color: "text-violet-600" },
-};
-
-const ROW_BG: Record<NonNullable<Style["emphasis"]>, string> = {
+const ROW_BG: Record<NonNullable<EventStyle["emphasis"]>, string> = {
   repair: "bg-violet-50/70 border-l-2 border-l-violet-500",
   alarm: "bg-red-50 border-l-2 border-l-red-600",
 };
@@ -106,10 +67,10 @@ export function ActivityFeed({
   return (
     <section
       aria-label={title}
-      className="min-w-0 rounded-[3px] border border-stone-300 bg-[#FBFAF7] shadow-[0_1px_0_rgba(0,0,0,0.04)]"
+      className={`min-w-0 ${PANEL}`}
     >
       <header className="flex items-center justify-between border-b border-stone-300 px-3 py-2">
-        <h2 className="font-mono text-[11px] uppercase tracking-[0.12em] text-stone-500">{title}</h2>
+        <h2 className={LABEL}>{title}</h2>
         <span className="inline-flex items-center gap-1.5 font-mono text-[11px] text-stone-500">
           <Radio className="size-3 text-emerald-600" aria-hidden /> live
         </span>
@@ -130,7 +91,7 @@ export function ActivityFeed({
       ) : (
         <ol className="max-h-[70vh] divide-y divide-stone-200 overflow-y-auto">
           {events.map((e) => {
-            const s = STYLES[e.type] ?? STYLES.built;
+            const s = eventStyle(e.type);
             const Icon = s.icon;
             return (
               <li
