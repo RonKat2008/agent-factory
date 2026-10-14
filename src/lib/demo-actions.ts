@@ -1,6 +1,6 @@
 // Shared demo actions used by the key-gated /api/demo/* routes and the public tour route.
 import { extraEntries, resetAcmeState, setAcmeState, getAcmeState } from "@/lib/demo-acme";
-import { getActiveVersion, getAgentDetail, listAgents, memoryClear, setVersionStatus, updateAgent } from "@/lib/repo";
+import { deleteVersionsAbove, getActiveVersion, getAgentDetail, listAgents, memoryClear, setVersionStatus, updateAgent } from "@/lib/repo";
 import { baselineMemory } from "@/lib/runtime/run-agent";
 import { SEED_NAMES } from "@/lib/seed-specs";
 import type { Agent } from "@/lib/types";
@@ -32,8 +32,10 @@ export async function resetDemo() {
   if (!watcher) return { ok: true, watcherId: null };
   const detail = await getAgentDetail(watcher.id);
   for (const v of detail?.versions ?? []) {
-    await setVersionStatus(watcher.id, v.version, v.version === 1 ? "active" : "rejected");
+    if (v.version === 1) await setVersionStatus(watcher.id, 1, "active");
   }
+  // Remove later versions (not just reject) so the next repair ships v2 again; repair history lives in events.
+  await deleteVersionsAbove(watcher.id, 1);
   await updateAgent(watcher.id, { currentVersion: 1, status: "live", nextRunAt: new Date(Date.now() + RESET_DELAY_MS) });
   await memoryClear(watcher.id);
   // Re-baseline so the next run reports only entries published after the reset (a first run would summarize all 6).

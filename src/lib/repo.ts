@@ -93,8 +93,8 @@ fb as (
 ),
 rep as (
   select agent_id, count(*)::int as repairs
-  from agent_versions
-  where created_by = 'factory' and reason like 'auto-repair%'
+  from events
+  where type = 'repaired' and agent_id is not null
   group by agent_id
 )
 select a.id, a.name, a.request, a.status, a.current_version, a.schedule, a.next_run_at,
@@ -290,7 +290,7 @@ export async function getStats(): Promise<Stats> {
        (select count(*)::int from agents where status = 'live') as live,
        (select count(*)::int from runs where kind in ${NON_DRY}
           and started_at >= (date_trunc('day', now() at time zone 'America/Los_Angeles') at time zone 'America/Los_Angeles')) as today,
-       (select count(*)::int from agent_versions where created_by = 'factory' and reason like 'auto-repair%') as repairs,
+       (select count(*)::int from events where type = 'repaired') as repairs,
        (select coalesce(sum(cost_usd), 0) from runs) as cost`,
   );
   const r = rows[0] ?? {};
@@ -383,6 +383,11 @@ export async function updateAgent(
 
 export async function setVersionStatus(agentId: string, version: number, status: VersionStatus): Promise<void> {
   await query(`update agent_versions set status = $3 where agent_id = $1 and version = $2`, [agentId, version, status]);
+}
+
+/** Demo reset: remove every version above `keepThrough` for one agent so the next insertVersion yields v2. */
+export async function deleteVersionsAbove(agentId: string, keepThrough: number): Promise<void> {
+  await query(`delete from agent_versions where agent_id = $1 and version > $2`, [agentId, keepThrough]);
 }
 
 export async function createRun(r: { agentId: string; version: number; kind: RunKind }): Promise<string> {

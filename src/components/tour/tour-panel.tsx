@@ -115,7 +115,9 @@ export function TourPanel() {
           <div className="feed-row-enter mt-4 space-y-3 rounded-[3px] border border-violet-300 border-l-4 border-l-violet-600 bg-violet-50/70 p-4">
             <p className="flex items-center gap-2 text-[18px] font-semibold text-violet-900">
               <PartyPopper className="size-5" aria-hidden />
-              Fixed in <span className="font-mono tabular-nums">{Math.max(1, Math.round(t.elapsedMs / 1000))}s</span>, no human involved
+              <span>
+                Fixed in <span className="font-mono tabular-nums">{Math.max(1, Math.round(t.elapsedMs / 1000))}s</span>, no human involved
+              </span>
             </p>
             <p className="text-[13.5px] leading-relaxed text-stone-700">
               <span className={LABEL}>diagnosis</span><br />
