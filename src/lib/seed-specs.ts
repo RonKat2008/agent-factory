@@ -173,14 +173,6 @@ export function chainSeedAgent(watcherId: string, research: ChainResearch): Seed
       { kind: "nonempty", addedBy: "build" },
       { kind: "has_citations", addedBy: "build" },
       { kind: "max_items", config: { max: 4 }, addedBy: "build" },
-      {
-        kind: "llm_judge",
-        config: {
-          rubric:
-            "Every bullet is about an Acme product change, says how it compares to the market or competitors, and states one implication for us; every bullet ends with a source link.",
-        },
-        addedBy: "build",
-      },
     ],
     plan: {
       runs: `Whenever ${SEED_NAMES.watcher} posts`,
