@@ -72,6 +72,17 @@ const RequireApproval = z.object({
   params: z.object({ message: tpl.optional() }),
 });
 
+const RunCode = z.object({
+  id: z.string(),
+  block: z.literal("run_code"),
+  params: z.object({
+    code: z
+      .string()
+      .describe("Body of an async JS function (input) => result. `input` is the resolved input value. Return JSON-serializable data. No network, no imports."),
+    input: tpl,
+  }),
+});
+
 export const StepSchema = z.discriminatedUnion("block", [
   FetchUrl,
   FetchRss,
@@ -82,6 +93,7 @@ export const StepSchema = z.discriminatedUnion("block", [
   DiffWithMemory,
   SendSlack,
   RequireApproval,
+  RunCode,
 ]);
 export type Step = z.infer<typeof StepSchema>;
 export type BlockName = Step["block"];

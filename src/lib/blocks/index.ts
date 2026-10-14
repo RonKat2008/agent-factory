@@ -6,6 +6,7 @@ import { filter } from "./filter";
 import { githubIssues } from "./github-issues";
 import { hnSearch } from "./hn-search";
 import { llm } from "./llm";
+import { runCode } from "./run-code";
 import { requireApproval } from "./require-approval";
 import { sendSlack } from "./send-slack";
 import type { BlockContext, BlockDef } from "./types";
@@ -68,6 +69,13 @@ export const BLOCKS: Record<BlockName, BlockDef> = {
     params: "{ message? }",
     outputs: "{ needsApproval: true, message }",
   },
+  run_code: {
+    run: runCode,
+    description:
+      "Run a small custom JavaScript transform in an isolated Vercel Sandbox microVM (no network, no imports). PREFER the built-in blocks (filter, llm, diff_with_memory...); use run_code ONLY for transforms they cannot express, e.g. custom parsing, scoring/ranking, dedupe, grouping, reshaping. `code` is the BODY of an async function (input) => result: it must `return` JSON-serializable data. Input <=200KB, output <=100KB, 60s limit.",
+    params: "{ code: string (function body, uses `input`, must return a value), input: template resolving to the data passed as `input` }",
+    outputs: "{ result, items? (only when result is an array), ms, engine: 'vercel-sandbox'|'local-demo', sandboxId }",
+  },
 };
 
 const EXAMPLES: Record<BlockName, string> = {
@@ -79,6 +87,8 @@ const EXAMPLES: Record<BlockName, string> = {
   filter: '{"id":"top","block":"filter","params":{"input":"{{steps.hn.items}}","field":"points","op":"gte","value":100}}  -> {{steps.top.items}}',
   diff_with_memory: '{"id":"diff","block":"diff_with_memory","params":{"input":"{{steps.page.text}}","memoryKey":"pricing"}}  -> {{steps.diff.text}}, {{steps.diff.changed}}',
   send_slack: '{"id":"post","block":"send_slack","params":{"message":"{{steps.sum.markdown}}","skipIfEmpty":true}}',
+  run_code:
+    '{"id":"top","block":"run_code","params":{"code":"return input.filter(i => i.points > 0).sort((a, b) => b.points - a.points).slice(0, 3);","input":"{{steps.hn.items}}"}}  -> {{steps.top.items}}, {{steps.top.result}}',
   require_approval: '{"id":"approve","block":"require_approval","params":{"message":"Post this digest?"}}',
 };
 
