@@ -189,8 +189,7 @@ function RepairsOverTime({ d, now }: { d: FloorData; now: number }) {
 export function FactoryFloor({ agents, now }: { agents: Agent[]; now: number }) {
   const d = buildFloorData(agents, now);
   return (
-    <section aria-label="Factory floor" className="mt-4">
-      <h2 className={`mb-2 ${LABEL}`}>Factory floor</h2>
+    <section aria-label="Factory floor charts" className="mt-3">
       <div className="grid gap-3 md:grid-cols-3">
         <RunsPerHour d={d} now={now} />
         <CostTrend d={d} />

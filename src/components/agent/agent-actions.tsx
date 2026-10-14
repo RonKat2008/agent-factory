@@ -5,9 +5,11 @@ import { toast } from "sonner";
 import { track } from "@vercel/analytics";
 import { runNow, setPaused } from "@/lib/api-client";
 import type { Agent } from "@/lib/types";
-import { BTN_SECONDARY } from "./format";
+import { motion } from "motion/react";
+import { SPRING } from "@/components/motion";
+import { BTN_PRIMARY, BTN_SECONDARY } from "./format";
 
-/** Run now / Pause — sits in the header action row next to Export. */
+/** Run now (primary) / Pause — the header action row. Export lives in the "More" overflow. */
 export function AgentActions({ agent, onChanged }: { agent: Agent; onChanged: () => void }) {
   const [busy, setBusy] = useState<"run" | "pause" | null>(null);
   const paused = agent.status === "paused";
@@ -27,14 +29,18 @@ export function AgentActions({ agent, onChanged }: { agent: Agent; onChanged: ()
 
   return (
     <>
-      <button
-        className={BTN_SECONDARY}
+      <motion.button
+        type="button"
+        className={BTN_PRIMARY}
+        whileTap={{ scale: 0.97 }}
+        transition={SPRING.snappy}
         disabled={busy !== null || agent.currentVersion == null}
         onClick={() => act("run", () => runNow(agent.id).then(() => track("run_now")), "Run started")}
       >
         {busy === "run" ? <Loader2 className="size-3.5 animate-spin" /> : <Zap className="size-3.5" />} Run now
-      </button>
+      </motion.button>
       <button
+        type="button"
         className={BTN_SECONDARY}
         disabled={busy !== null}
         onClick={() => act("pause", () => setPaused(agent.id, !paused), paused ? "Agent resumed" : "Agent paused")}

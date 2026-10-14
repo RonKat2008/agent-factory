@@ -2,7 +2,7 @@ import { ExternalLink } from "lucide-react";
 import { SlackMessage } from "@/components/slack-message";
 import type { Run } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { LABEL, PANEL, fullTime, relTime } from "./format";
+import { PANEL, fullTime, relTime } from "./format";
 
 /** What the agent actually produces: the last succeeded run's message, styled like a Slack post. */
 export function LatestOutput({ runs, agentName }: { runs: Run[]; agentName: string }) {
@@ -10,12 +10,13 @@ export function LatestOutput({ runs, agentName }: { runs: Run[]; agentName: stri
   const out = run?.output;
   const when = run ? (run.finishedAt ?? run.startedAt) : null;
   return (
-    <section className={cn(PANEL, "p-4")} aria-label="Latest output">
-      <h2 className={cn(LABEL, "mb-3")}>Latest output</h2>
+    <section className={cn(PANEL, "border-stone-400 p-5")} aria-label="Latest message">
+      <h2 className="mb-1 text-[16px] font-semibold tracking-tight text-stone-900">What it sent last</h2>
+      <p className="mb-4 text-[13px] text-stone-500">Exactly what landed in Slack.</p>
       {!run || !out ? (
-        <p className="text-[13px] text-stone-500">No posts yet.</p>
+        <p className="rounded-[4px] border border-dashed border-stone-300 px-3 py-4 text-[14px] text-stone-500">Nothing sent yet. Hit &ldquo;Run now&rdquo; to see its first message here.</p>
       ) : (
-        <div className="flex gap-3">
+        <div className="flex gap-3 rounded-[4px] border border-stone-200 bg-white p-3.5">
           <span
             className="mt-0.5 flex size-9 shrink-0 items-center justify-center rounded-[4px] bg-stone-900 font-mono text-[13px] text-[#F6F4EF]"
             aria-hidden

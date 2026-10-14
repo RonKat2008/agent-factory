@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { X } from "lucide-react";
+import { Sparkles, X } from "lucide-react";
 
 const KEY = "af-tour-banner-dismissed";
 
@@ -19,12 +19,22 @@ export function TourBanner() {
   }, []);
   if (!show) return null;
   return (
-    <div className="mb-4 flex items-center gap-3 rounded-[3px] border border-violet-300 bg-violet-50 px-3 py-1.5 text-[13px] text-violet-900">
-      <span aria-hidden className="size-1.5 rounded-full bg-violet-600" />
-      <span>
-        New here?{" "}
-        <Link href="/tour" className="font-semibold underline underline-offset-2 hover:text-violet-700">Take the 60-second tour →</Link>
+    <aside
+      aria-label="Tour"
+      className="mb-6 flex items-center gap-3 rounded-[4px] border border-violet-200 bg-violet-50/70 px-3.5 py-2.5 text-[14px] text-violet-950"
+    >
+      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-violet-600 text-white" aria-hidden>
+        <Sparkles className="size-3.5" />
       </span>
+      <p className="min-w-0">
+        New here? Watch an agent break and fix itself in 60 seconds.{" "}
+        <Link
+          href="/tour"
+          className="whitespace-nowrap font-semibold text-violet-800 underline underline-offset-2 hover:text-violet-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-600/60"
+        >
+          Take the tour
+        </Link>
+      </p>
       <button
         type="button"
         aria-label="Dismiss"
@@ -32,10 +42,10 @@ export function TourBanner() {
           setShow(false);
           try { localStorage.setItem(KEY, "1"); } catch { /* ignore */ }
         }}
-        className="ml-auto rounded-[3px] p-1 text-violet-700 hover:bg-violet-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/40"
+        className="ml-auto shrink-0 rounded-[3px] p-1 text-violet-700 hover:bg-violet-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/40"
       >
         <X className="size-3.5" aria-hidden />
       </button>
-    </div>
+    </aside>
   );
 }

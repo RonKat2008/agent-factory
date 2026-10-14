@@ -1,46 +1,111 @@
+"use client";
+
+import type { ReactNode } from "react";
 import type { Stats } from "@/lib/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
-import { CountUp } from "./count-up";
+import { NumberTicker, Pulse } from "@/components/motion";
+import { Term } from "@/components/explain";
 
-const int = (n: number) => String(Math.round(n));
-const usd = (n: number) => `$${n.toFixed(4)}`;
+const int = (n: number) => Math.round(n).toLocaleString();
+const usd = (n: number) => `$${n < 0.1 ? n.toFixed(4) : n.toFixed(2)}`;
+const times = (n: number) => `${Math.round(n)}×`;
 
-function Stat({ label, value, format, accent, loading }: { label: string; value: number; format: (n: number) => string; accent?: boolean; loading: boolean }) {
+/** A number inside the hero sentence: mono, counts up from 0 on first load. */
+function Num({ value, format, tone = "text-stone-900" }: { value: number; format: (n: number) => string; tone?: string }) {
   return (
-    <div className={cn("px-4 py-3", accent && "bg-violet-50/60")}>
-      <div className={cn("font-mono text-[11px] uppercase tracking-[0.12em]", accent ? "text-violet-700" : "text-stone-500")}>
-        {label}
-      </div>
-      {loading ? (
-        <Skeleton className="mt-1.5 h-9 w-20 rounded-[3px]" />
+    <span className={cn("font-mono font-semibold", tone)}>
+      <NumberTicker value={value} from={0} format={format} />
+    </span>
+  );
+}
+
+function Sentence({ stats }: { stats: Stats }) {
+  const live = stats.agentsLive;
+  const agents = live === 1 ? "agent is" : "agents are";
+  return (
+    <p className="max-w-[34ch] text-[26px] font-medium leading-[1.25] tracking-tight text-stone-500 sm:max-w-[42ch] sm:text-[32px]">
+      {live > 0 ? (
+        <>
+          <span className="text-stone-900">
+            <Num value={live} format={int} /> {agents}
+          </span>{" "}
+          working for you.
+        </>
       ) : (
-        <div
-          className={cn(
-            "mt-0.5 font-mono text-[34px] font-semibold leading-tight tabular-nums",
-            accent ? "text-violet-700" : "text-stone-900",
-          )}
-        >
-          <CountUp value={value} format={format} />
-        </div>
-      )}
+        <>None of your agents are running right now.</>
+      )}{" "}
+      Today they&rsquo;ve done <Num value={stats.runsToday} format={int} /> {stats.runsToday === 1 ? "job" : "jobs"}
+      {stats.autoRepairs > 0 ? (
+        <>
+          , fixed themselves <Num value={stats.autoRepairs} format={times} tone="text-violet-700" />
+        </>
+      ) : null}
+      , and cost <Num value={stats.totalCostUsd} format={usd} /> in total.
+    </p>
+  );
+}
+
+function Tile({ label, children, accent }: { label: ReactNode; children: ReactNode; accent?: boolean }) {
+  return (
+    <div className="flex min-w-0 items-baseline gap-2 py-2 sm:py-0">
+      <dt className={cn("text-[13px]", accent ? "text-violet-800" : "text-stone-500")}>{label}</dt>
+      <dd className={cn("order-first font-mono text-[18px] font-semibold tabular-nums", accent ? "text-violet-700" : "text-stone-900")}>
+        {children}
+      </dd>
     </div>
   );
 }
 
+/** Hero summary sentence plus a slim strip of the same totals in plain words. */
 export function StatStrip({ stats }: { stats: Stats | null }) {
-  const l = !stats;
+  if (!stats) {
+    return (
+      <section aria-label="Your agents at a glance" className="space-y-3">
+        <Skeleton className="h-9 w-full max-w-xl rounded-[3px]" />
+        <Skeleton className="h-9 w-3/4 max-w-md rounded-[3px]" />
+        <Skeleton className="h-6 w-full max-w-lg rounded-[3px]" />
+      </section>
+    );
+  }
   return (
-    <section aria-label="Fleet totals">
-      <div className="grid grid-cols-2 divide-stone-300 rounded-[3px] border border-stone-300 bg-[#FBFAF7] shadow-[0_1px_0_rgba(0,0,0,0.04)] sm:grid-cols-4 sm:divide-x [&>*:nth-child(-n+2)]:border-b [&>*:nth-child(-n+2)]:border-stone-300 sm:[&>*:nth-child(-n+2)]:border-b-0 [&>*:nth-child(odd)]:border-r [&>*:nth-child(odd)]:border-stone-300 sm:[&>*:nth-child(odd)]:border-r-0">
-        <Stat loading={l} label="Agents live" value={stats?.agentsLive ?? 0} format={int} />
-        <Stat loading={l} label="Runs today" value={stats?.runsToday ?? 0} format={int} />
-        <Stat loading={l} label="Repaired automatically" value={stats?.autoRepairs ?? 0} format={int} accent />
-        <Stat loading={l} label="Total cost" value={stats?.totalCostUsd ?? 0} format={usd} />
-      </div>
-      <p className="mt-2 text-xs text-stone-500">
-        Other tools help you build an agent. Ours takes responsibility for keeping it working.
-      </p>
+    <section aria-label="Your agents at a glance" className="space-y-5">
+      <Sentence stats={stats} />
+      <dl className="grid grid-cols-2 gap-x-6 border-y border-stone-300 py-2 sm:flex sm:flex-wrap sm:gap-x-10 sm:py-3">
+        <Tile label="working now">
+          <NumberTicker value={stats.agentsLive} format={int} />
+        </Tile>
+        <Tile
+          label={
+            <>
+              <Term id="run">jobs</Term> done today
+            </>
+          }
+        >
+          <NumberTicker value={stats.runsToday} format={int} />
+        </Tile>
+        <Tile
+          accent
+          label={
+            <Term id="repair" className="text-violet-800">
+              fixed themselves
+            </Term>
+          }
+        >
+          <Pulse tone="violet" trigger={stats.autoRepairs} radius={3}>
+            <NumberTicker value={stats.autoRepairs} format={int} />
+          </Pulse>
+        </Tile>
+        <Tile
+          label={
+            <>
+              <Term id="cost">spent</Term> so far
+            </>
+          }
+        >
+          <NumberTicker value={stats.totalCostUsd} format={usd} />
+        </Tile>
+      </dl>
     </section>
   );
 }

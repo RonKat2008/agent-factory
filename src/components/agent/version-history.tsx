@@ -6,13 +6,22 @@ import { track } from "@vercel/analytics";
 import { acceptVersion, rejectVersion } from "@/lib/api-client";
 import type { AgentTest, AgentVersion } from "@/lib/types";
 import { cn } from "@/lib/utils";
+import { AnimatePresence, motion } from "motion/react";
+import { DURATION, EASE, FadeIn, Pulse, SPRING, Stagger, StaggerItem } from "@/components/motion";
+import { Term } from "@/components/explain";
 import { collapseDiff, diffLines, diffStats } from "./diff";
-import { BTN_PRIMARY, BTN_SECONDARY, LABEL, PANEL, fullTime, relTime } from "./format";
+import { BTN_PRIMARY, BTN_SECONDARY, PANEL, fullTime, relTime } from "./format";
 
 const STATUS_CLS: Record<AgentVersion["status"], string> = {
   active: "border-emerald-300 bg-emerald-50 text-emerald-800",
   proposed: "border-amber-300 bg-amber-50 text-amber-900",
   rejected: "border-stone-300 bg-stone-100 text-stone-500 line-through",
+};
+
+const STATUS_LABEL: Record<AgentVersion["status"], string> = {
+  active: "current",
+  proposed: "suggested",
+  rejected: "not used",
 };
 
 const testKey = (t: AgentTest) => JSON.stringify([t.kind, t.config ?? null]);
@@ -67,7 +76,9 @@ function AddedTests({ version, parent }: { version: AgentVersion; parent: AgentV
   if (added.length === 0) return null;
   return (
     <div className="flex flex-col gap-1.5">
-      <h4 className={LABEL}>Tests added in this version</h4>
+      <h4 className="text-[13px] font-medium text-stone-700">
+        <Term id="regression-test">Checks added in this change</Term>
+      </h4>
       {added.map((t, i) => {
         const repair = t.addedBy === "repair";
         return (
@@ -84,7 +95,7 @@ function AddedTests({ version, parent }: { version: AgentVersion; parent: AgentV
                 {t.kind}
                 {t.config?.stepId ? `(${t.config.stepId})` : ""}
               </span>
-              {repair && <span className="ml-2 font-mono text-[10px] uppercase tracking-wide text-violet-700">repair</span>}
+              {repair && <span className="ml-2 text-[11px] font-medium text-violet-700">added by the fix</span>}
               {t.note && <p className="mt-0.5 text-[12px] leading-snug">{t.note}</p>}
             </div>
           </div>
@@ -129,7 +140,8 @@ function VersionRow({
   }
 
   return (
-    <li
+    <StaggerItem
+      as="li"
       className={cn(
         "border-l-2 pl-3",
         factory ? "border-l-violet-500" : "border-l-stone-300",
@@ -138,7 +150,7 @@ function VersionRow({
     >
       {isActive && (
         <span className="absolute right-0 top-0 rounded-bl-[3px] bg-emerald-600 px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-white">
-          active
+          in use
         </span>
       )}
       <div className="flex flex-wrap items-center gap-2">
@@ -147,20 +159,26 @@ function VersionRow({
         </span>
         <span
           className={cn(
-            "inline-flex items-center gap-1 rounded-[3px] border px-1.5 py-0.5 font-mono text-[11px] uppercase tracking-wide",
+            "inline-flex items-center gap-1 rounded-[3px] border px-1.5 py-0.5 text-[12px] font-medium",
             factory ? "border-violet-300 bg-violet-50 text-violet-800" : "border-stone-300 bg-stone-100 text-stone-600",
           )}
         >
           {factory ? <Wrench className="size-3" aria-hidden /> : <User className="size-3" aria-hidden />}
-          {version.createdBy}
+          {factory ? (
+            <Term id="repair" className="text-violet-800">
+              Fixed automatically
+            </Term>
+          ) : (
+            "Made by you"
+          )}
         </span>
         <span
           className={cn(
-            "rounded-[3px] border px-1.5 py-0.5 font-mono text-[11px] uppercase tracking-wide",
+            "rounded-[3px] border px-1.5 py-0.5 text-[12px]",
             STATUS_CLS[version.status],
           )}
         >
-          {version.status}
+          {STATUS_LABEL[version.status]}
         </span>
         <span className="font-mono text-[11px] tabular-nums text-stone-500" title={fullTime(version.createdAt)}>
           {relTime(version.createdAt)}
@@ -169,8 +187,8 @@ function VersionRow({
 
       {factory && parent ? (
         <div className="mt-2 max-w-2xl rounded-[3px] border border-violet-300 bg-violet-50 px-3 py-2">
-          <h3 className="flex items-center gap-1.5 font-mono text-[11px] uppercase tracking-[0.1em] text-violet-800">
-            <Wrench className="size-3" aria-hidden /> What the factory changed and why
+          <h3 className="flex items-center gap-1.5 text-[13px] font-medium text-violet-800">
+            <Wrench className="size-3.5" aria-hidden /> What it fixed, and why
           </h3>
           <p className="mt-1 text-[14px] leading-snug text-violet-950">{version.reason}</p>
         </div>
@@ -179,36 +197,56 @@ function VersionRow({
       )}
 
       {version.status === "proposed" && (
-        <div className="mt-2 flex gap-2">
+        <FadeIn className="mt-2">
+          <Pulse trigger={version.version} tone="violet">
+          <div className="flex gap-2">
           <button className={BTN_PRIMARY} disabled={busy !== null} onClick={() => decide("accept")}>
             {busy === "accept" && <Loader2 className="size-3.5 animate-spin" />} Accept
           </button>
           <button className={BTN_SECONDARY} disabled={busy !== null} onClick={() => decide("reject")}>
             {busy === "reject" && <Loader2 className="size-3.5 animate-spin" />} Reject
           </button>
-        </div>
+          </div>
+          </Pulse>
+        </FadeIn>
       )}
 
       <button
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="mt-2 inline-flex items-center gap-1 rounded-[3px] font-mono text-[11px] uppercase tracking-[0.1em] text-stone-600 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/40"
+        className="mt-2 inline-flex items-center gap-1 rounded-[3px] text-[13px] font-medium text-stone-600 hover:text-stone-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-stone-900/40"
       >
         <ChevronRight className={cn("size-3.5 transition-transform", open && "rotate-90")} aria-hidden />
-        {parent ? `Diff vs v${parent.version}` : "Spec"}
+        {parent ? (
+          <>
+            <Term id="spec">What changed</Term>
+            <span className="font-mono text-[11px] font-normal text-stone-400">vs v{parent.version}</span>
+          </>
+        ) : (
+          <Term id="spec">The recipe</Term>
+        )}
       </button>
 
+      <AnimatePresence initial={false}>
       {open && (
-        <div className="mt-2 flex flex-col gap-3 pb-1">
+        <motion.div
+          key="diff"
+          style={{ transformOrigin: "top" }}
+          initial={{ opacity: 0, scaleY: 0.94 }}
+          animate={{ opacity: 1, scaleY: 1, transition: SPRING.gentle }}
+          exit={{ opacity: 0, transition: { duration: DURATION.fast, ease: EASE.in } }}
+          className="mt-2 flex flex-col gap-3 pb-1"
+        >
           {parent ? (
             <DiffView version={version} parent={parent} />
           ) : (
             <p className="text-[12px] text-stone-500">Initial version — no parent to diff against.</p>
           )}
           <AddedTests version={version} parent={parent} />
-        </div>
+        </motion.div>
       )}
-    </li>
+      </AnimatePresence>
+    </StaggerItem>
   );
 }
 
@@ -244,12 +282,14 @@ export function VersionHistory({
   );
 
   return (
-    <section className={cn(PANEL, "p-4")} aria-label="Version history">
-      <h2 className={cn(LABEL, "mb-3")}>Version history</h2>
+    <section className={cn(PANEL, "p-4")} aria-label="Changes over time">
+      <h2 className="mb-3 text-[16px] font-semibold tracking-tight text-stone-900">
+        Changes over time <span className="text-[13px] font-normal text-stone-500">(<Term id="version">versions</Term>)</span>
+      </h2>
       {versions.length === 0 ? (
         <p className="text-[13px] text-stone-500">No versions yet.</p>
       ) : (
-        <ol className="flex flex-col gap-6">
+        <Stagger as="ol" gap="tight" className="flex flex-col gap-6">
           {kept.map(row)}
           {rejected.length > 0 && (
             <li className="opacity-70">
@@ -267,7 +307,7 @@ export function VersionHistory({
               {showRejected && <ol className="mt-4 flex flex-col gap-6">{rejected.map(row)}</ol>}
             </li>
           )}
-        </ol>
+        </Stagger>
       )}
     </section>
   );

@@ -1,22 +1,23 @@
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Factory } from "lucide-react";
 import { getAgents, getStats } from "@/lib/api-client";
 import type { Agent, Stats } from "@/lib/types";
-import { BTN_PRIMARY, LABEL } from "@/components/ui-tokens";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ActivityFeed } from "@/components/feed/activity-feed";
-import { AgentRow } from "./agent-row";
+import { FadeIn, LayoutList, STAGGER } from "@/components/motion";
+import { AgentCard } from "./agent-card";
 import { StatStrip } from "./stat-strip";
-import { FactoryFloor } from "./factory-floor";
+import { FleetAnalytics } from "./fleet-analytics";
+import { FleetEmpty } from "./fleet-empty";
 
 const POLL_MS = 3000;
+const GRID = "grid gap-4 md:grid-cols-2 xl:grid-cols-3";
 
 export function FleetBoard() {
   const [stats, setStats] = useState<Stats | null>(null);
   const [agents, setAgents] = useState<Agent[] | null>(null);
+  const [firstIds, setFirstIds] = useState<string[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
 
@@ -28,9 +29,10 @@ export function FleetBoard() {
         if (!alive) return;
         setStats(s);
         setAgents(a);
+        setFirstIds((ids) => ids ?? a.map((x) => x.id));
         setError(null);
       } catch (e) {
-        if (alive) setError(e instanceof Error ? e.message : "Failed to load fleet");
+        if (alive) setError(e instanceof Error ? e.message : "Failed to load your agents");
       }
       if (alive) setNow(Date.now());
     }
@@ -42,47 +44,60 @@ export function FleetBoard() {
     };
   }, []);
 
+  /** Cards present on first load rise in one after another; later arrivals use LayoutList's entrance. */
+  const entranceDelay = (id: string) => {
+    const i = firstIds?.indexOf(id) ?? -1;
+    return i < 0 ? null : i * STAGGER.normal;
+  };
+
   return (
-    <div className="space-y-4">
-      <StatStrip stats={stats} />
-      {error && (
-        <p role="alert" className="rounded-[3px] border border-red-300 bg-red-50 px-3 py-2 font-mono text-xs text-red-800">
-          Connection problem: {error}. Showing last known data.
-        </p>
-      )}
-      <div className="grid items-start gap-4 lg:grid-cols-[minmax(0,1fr)_380px]">
-        <section aria-label="Agents" className="min-w-0">
-          <h2 className={`mb-2 ${LABEL}`}>
-            Fleet{agents ? ` · ${agents.length}` : ""}
-          </h2>
-          {agents === null ? (
-            <div className="space-y-2">
-              {[0, 1, 2].map((i) => (
-                <Skeleton key={i} className="h-[72px] rounded-[3px]" />
-              ))}
-            </div>
-          ) : agents.length === 0 ? (
-            <div className="flex flex-col items-center gap-3 rounded-[3px] border border-dashed border-stone-400 bg-[#FBFAF7] px-6 py-14 text-center">
-              <Factory className="size-8 text-stone-400" aria-hidden />
-              <p className="text-sm text-stone-600">The floor is empty. Describe a job in plain English and the factory builds, tests and runs it.</p>
-              <Link
-                href="/new"
-                className={BTN_PRIMARY}
-              >
-                Create your first agent
-              </Link>
-            </div>
-          ) : (
-            <ul className="space-y-2">
-              {agents.map((a) => (
-                <AgentRow key={a.id} agent={a} now={now} />
-              ))}
-            </ul>
-          )}
-          {agents && agents.length > 0 && <FactoryFloor agents={agents} now={now} />}
-        </section>
-        <ActivityFeed limit={40} title="Activity" />
+    <div className="space-y-10">
+      <header className="space-y-5">
+        <div className="space-y-1">
+          <h1 className="text-[15px] font-semibold text-stone-900">My agents</h1>
+          <p className="text-[13px] text-stone-500">Everything you&rsquo;ve built, and whether it&rsquo;s working right now.</p>
+        </div>
+        <StatStrip stats={stats} />
+        {error && (
+          <p role="alert" className="rounded-[3px] border border-red-300 bg-red-50 px-3 py-2 text-[13px] text-red-800">
+            Can&rsquo;t reach the factory right now ({error}). Showing what we saw last.
+          </p>
+        )}
+      </header>
+
+      <section aria-label="Your agents" data-tour="fleet-agents">
+        {agents === null ? (
+          <div className={GRID}>
+            {[0, 1, 2].map((i) => (
+              <Skeleton key={i} className="h-[300px] rounded-[4px]" />
+            ))}
+          </div>
+        ) : agents.length === 0 ? (
+          <FleetEmpty />
+        ) : (
+          <LayoutList
+            items={agents}
+            getKey={(a) => a.id}
+            className={GRID}
+            itemClassName="flex"
+            renderItem={(a) => {
+              const delay = entranceDelay(a.id);
+              const card = <AgentCard agent={a} now={now} />;
+              return delay == null ? card : (
+                <FadeIn delay={delay} y={14} className="flex w-full">
+                  {card}
+                </FadeIn>
+              );
+            }}
+          />
+        )}
+      </section>
+
+      <div className="max-w-[760px]">
+        <ActivityFeed limit={25} title="What's happening" />
       </div>
+
+      {agents && agents.length > 0 && <FleetAnalytics agents={agents} now={now} />}
     </div>
   );
 }

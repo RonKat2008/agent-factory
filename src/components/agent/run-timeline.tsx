@@ -3,7 +3,9 @@ import { useEffect, useState } from "react";
 import { CheckCircle2, ChevronRight, Clock, Loader2, XCircle } from "lucide-react";
 import type { Run, RunStatus, StepRun } from "@/lib/types";
 import { cn } from "@/lib/utils";
-import { LABEL, PANEL, durationMs, fullTime, linkify, relTime, usd } from "./format";
+import { Stagger, StaggerItem } from "@/components/motion";
+import { Term } from "@/components/explain";
+import { PANEL, durationMs, fullTime, linkify, relTime, usd } from "./format";
 
 function StatusIcon({ status }: { status: RunStatus }) {
   const c = "size-4 shrink-0";
@@ -43,6 +45,14 @@ function Json({ label, value }: { label: string; value: unknown }) {
   );
 }
 
+const KIND_LABEL: Record<Run["kind"], string> = {
+  scheduled: "scheduled",
+  manual: "you ran it",
+  triggered: "started by another agent",
+  dry_run: "test run",
+  repair_test: "testing a fix",
+};
+
 const STEP_CLS: Record<StepRun["status"], string> = {
   ok: "text-emerald-700",
   error: "text-red-700",
@@ -56,10 +66,10 @@ function RunDetail({ run }: { run: Run }) {
 
       {run.steps && run.steps.length > 0 && (
         <div>
-          <h4 className={cn(LABEL, "mb-1.5")}>Step trace</h4>
-          <ol className="flex flex-col gap-2">
+          <h4 className="mb-1.5 text-[13px] font-medium text-stone-700">Steps</h4>
+          <Stagger as="ol" gap="tight" className="flex flex-col gap-2">
             {run.steps.map((s) => (
-              <li key={s.idx} className="rounded-[3px] border border-stone-200 bg-[#FBFAF7] p-2">
+              <StaggerItem as="li" key={s.idx} className="rounded-[3px] border border-stone-200 bg-[#FBFAF7] p-2">
                 <div className="flex flex-wrap items-center gap-2 font-mono text-[12px] tabular-nums">
                   <span className="text-stone-400">{s.idx}</span>
                   <span className="text-stone-900">{s.stepId}</span>
@@ -74,15 +84,17 @@ function RunDetail({ run }: { run: Run }) {
                   <Json label="input" value={s.input} />
                   <Json label="output" value={s.output} />
                 </div>
-              </li>
+              </StaggerItem>
             ))}
-          </ol>
+          </Stagger>
         </div>
       )}
 
       {run.tests && run.tests.length > 0 && (
         <div>
-          <h4 className={cn(LABEL, "mb-1.5")}>Test results</h4>
+          <h4 className="mb-1.5 text-[13px] font-medium text-stone-700">
+            <Term id="tests">Checks</Term>
+          </h4>
           <ul className="flex flex-col gap-1">
             {run.tests.map((t) => (
               <li key={t.testIndex} className="flex items-start gap-2 text-[12px]">
@@ -101,7 +113,7 @@ function RunDetail({ run }: { run: Run }) {
 
       {run.output && (
         <div>
-          <h4 className={cn(LABEL, "mb-1.5")}>Output</h4>
+          <h4 className="mb-1.5 text-[13px] font-medium text-stone-700">What it sent</h4>
           <p className="whitespace-pre-wrap break-words text-[13px] leading-relaxed text-stone-900">
             {linkify(run.output.message)}
           </p>
@@ -150,7 +162,7 @@ function RunRow({ run, open, onToggle }: { run: Run; open: boolean; onToggle: ()
               : "border-stone-300 bg-stone-100 text-stone-700",
           )}
         >
-          {run.kind}
+          {KIND_LABEL[run.kind] ?? run.kind}
         </span>
         <span className="font-mono text-[12px] tabular-nums text-stone-600">v{run.version}</span>
         <span className="ml-auto flex items-center gap-4 font-mono text-[12px] tabular-nums text-stone-500">
@@ -194,8 +206,10 @@ export function RunTimeline({ runs, focus }: { runs: Run[]; focus: RunFocus }) {
     });
 
   return (
-    <section className={PANEL} aria-label="Run timeline">
-      <h2 className={cn(LABEL, "border-b border-stone-300 px-3 py-2.5")}>Run timeline</h2>
+    <section className={PANEL} aria-label="Every run, step by step">
+      <h2 className="border-b border-stone-300 px-3 py-2.5 text-[16px] font-semibold tracking-tight text-stone-900">
+        Every <Term id="run">run</Term>, step by step
+      </h2>
       {runs.length === 0 ? (
         <p className="px-3 py-4 text-[13px] text-stone-500">No runs yet. Hit “Run now” to see one.</p>
       ) : (

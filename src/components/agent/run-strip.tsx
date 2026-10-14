@@ -1,12 +1,15 @@
 "use client";
 import type { Run } from "@/lib/types";
+import { motion } from "motion/react";
 import { cn } from "@/lib/utils";
-import { LABEL, fullTime, relTime } from "./format";
+import { SPRING } from "@/components/motion";
+import { Term } from "@/components/explain";
+import { fullTime, relTime } from "./format";
 
 const MAX = 30;
 
 function tone(r: Run): { cls: string; label: string } {
-  if (r.kind === "repair_test") return { cls: "bg-violet-500", label: "repair test" };
+  if (r.kind === "repair_test") return { cls: "bg-violet-500", label: "testing a fix" };
   switch (r.status) {
     case "succeeded":
       return { cls: "bg-emerald-500", label: "ok" };
@@ -25,7 +28,7 @@ const LEGEND = [
   ["bg-emerald-500", "ok"],
   ["bg-red-500", "failed"],
   ["bg-amber-500", "held"],
-  ["bg-violet-500", "repair test"],
+  ["bg-violet-500", "testing a fix"],
 ] as const;
 
 /** Last 30 runs, oldest to newest, as clickable status bars. */
@@ -35,7 +38,10 @@ export function RunStrip({ runs, onSelect }: { runs: Run[]; onSelect: (id: strin
   return (
     <section aria-label="Recent runs" className="flex flex-col gap-1.5">
       <div className="flex flex-wrap items-center justify-between gap-2">
-        <h2 className={LABEL}>Last {shown.length} runs</h2>
+        <h2 className="text-[13px] font-medium text-stone-700">
+          Last {shown.length} <Term id="run">runs</Term>{" "}
+          <span className="font-normal text-stone-500">(tap one to see what happened)</span>
+        </h2>
         <ul className="flex items-center gap-3 text-[11px] text-stone-500">
           {LEGEND.map(([c, l]) => (
             <li key={l} className="flex items-center gap-1">
@@ -50,9 +56,11 @@ export function RunStrip({ runs, onSelect }: { runs: Run[]; onSelect: (id: strin
           const t = tone(r);
           const title = `${t.label} · ${r.kind} · v${r.version} · ${relTime(r.startedAt)} (${fullTime(r.startedAt)})`;
           return (
-            <button
+            <motion.button
               key={r.id}
               type="button"
+              whileHover={{ y: -2 }}
+              transition={SPRING.snappy}
               title={title}
               aria-label={title}
               onClick={() => onSelect(r.id)}
@@ -64,7 +72,7 @@ export function RunStrip({ runs, onSelect }: { runs: Run[]; onSelect: (id: strin
                   t.cls,
                 )}
               />
-            </button>
+            </motion.button>
           );
         })}
       </div>
