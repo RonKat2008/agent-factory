@@ -166,7 +166,7 @@ export function ConnectableCard({ def, status, isUnlocked, onChange }: Props) {
 
         <footer className="mt-auto flex flex-wrap items-center gap-2 pt-1">
           {!isUnlocked ? (
-            <span className="inline-flex items-center gap-1.5 text-[12px] text-stone-500"><Lock className="size-3.5" aria-hidden /> Read-only · unlock to manage</span>
+            <span className="inline-flex items-center gap-1.5 text-[12px] text-stone-500"><Lock className="size-3.5" aria-hidden /> Team-wide · set up by the Pitcrew team</span>
           ) : isConnected && !isEditing ? (
             <>
               <button type="button" className={BTN_PRIMARY} onClick={handleTest} disabled={busy !== null}>

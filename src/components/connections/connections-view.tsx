@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, type ComponentType, type FormEvent } from "react";
+import { useEffect, useState, useSyncExternalStore, type ComponentType, type FormEvent } from "react";
 import Link from "next/link";
 import { ArrowUpRight, GitBranch, Hash, KeyRound, Loader2, LockOpen, Network, Newspaper, PackageOpen, Rss, SquareTerminal } from "lucide-react";
 import { toast } from "sonner";
@@ -167,6 +167,12 @@ function UnlockControl({ isUnlocked, onChange }: { isUnlocked: boolean; onChange
   const [isOpen, setIsOpen] = useState(false);
   const [key, setKey] = useState("");
   const [isBusy, setIsBusy] = useState(false);
+  // Team-wide credentials are owner-only: the unlock control appears only at /connections?admin=1.
+  const isAdminView = useSyncExternalStore(
+    () => () => {},
+    () => new URLSearchParams(window.location.search).has("admin"),
+    () => false,
+  );
 
   async function handleUnlock(e: FormEvent) {
     e.preventDefault();
@@ -197,6 +203,7 @@ function UnlockControl({ isUnlocked, onChange }: { isUnlocked: boolean; onChange
       </button>
     );
   }
+  if (!isAdminView) return null;
   if (!isOpen) {
     return (
       <button type="button" className={BTN_SECONDARY} onClick={() => setIsOpen(true)}>
