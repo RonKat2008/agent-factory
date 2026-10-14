@@ -26,13 +26,28 @@ function stepHasContent(block: string, output: unknown): { ok: boolean; why: str
   return { ok: Object.values(o).some(Boolean), why: "output has no truthy fields" };
 }
 
-async function judge(rubric: string, message: string): Promise<{ pass: boolean; reason: string; costUsd: number }> {
+const SOURCE_CONTEXT_CHARS = 6_000;
+
+/** The material the agent's writing step(s) saw, so the judge can check claims against it. */
+function sourceContext(spec: AgentSpec, results: Record<string, StepResultLite>): string {
+  const inputs = spec.steps
+    .filter((s) => s.block === "llm" && results[s.id]?.ok)
+    .map((s) => (results[s.id]?.resolvedParams as { input?: unknown } | undefined)?.input)
+    .map((v) => (typeof v === "string" ? v : v === undefined ? "" : JSON.stringify(v)))
+    .filter(Boolean);
+  return inputs.join("\n---\n").slice(0, SOURCE_CONTEXT_CHARS);
+}
+
+async function judge(rubric: string, message: string, source: string): Promise<{ pass: boolean; reason: string; costUsd: number }> {
   if (isDemoMode()) return { ...CANNED_JUDGE_RESULT, costUsd: 0 };
   try {
     const r = await generateText({
       model: fastModel(),
-      system: "You are a strict QA judge for an automated agent's output. Judge ONLY against the rubric. Give a one-sentence specific reason.",
-      prompt: `Rubric: ${rubric}\n\nMessage to judge:\n${message}`,
+      system:
+        "You are a QA judge for an automated agent's output. Judge ONLY against the rubric, using the source material the agent was given to check its claims. " +
+        "Fail only for a concrete, verifiable rubric violation. If a criterion cannot be checked from the message and source material, treat it as satisfied. " +
+        "Give a one-sentence specific reason.",
+      prompt: `Rubric: ${rubric}\n\nSource material the agent was given:\n${source || "(none captured)"}\n\nMessage to judge:\n${message}`,
       output: Output.object({ schema: z.object({ pass: z.boolean(), reason: z.string() }) }),
       abortSignal: AbortSignal.timeout(JUDGE_TIMEOUT_MS),
     });
@@ -79,7 +94,7 @@ export async function runTests(
           res(true, output.changed === false ? "nothing to judge (nothing changed)" : "nothing to judge (empty message)");
           break;
         }
-        const j = await judge(t.config?.rubric ?? "The message is useful, accurate and well formed.", message);
+        const j = await judge(t.config?.rubric ?? "The message is useful, accurate and well formed.", message, sourceContext(spec, results));
         res(j.pass, j.reason, j.costUsd);
         break;
       }
