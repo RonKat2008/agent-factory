@@ -172,6 +172,8 @@ function describe(step: Step): string {
       const fmt = { text: "plain text", cited_bullets: "markdown bullets, each ending with its source URL", issue_labels: "a list of { number, labels, comment? } objects" }[step.params.format];
       return `Yourself (no tool): ${step.params.instruction} Work from ${tpl(step.params.input)}. Output ${fmt}. (step "${step.id}")`;
     }
+    case "recall":
+      return `Yourself (no tool): recall what the fleet already knows about ${tpl(step.params.query)} (earlier posts and mentions from your own memory), and use it to avoid repeating news or to add context. (step "${step.id}")`;
     case "filter":
       return `Yourself (no tool): from ${tpl(step.params.input)}, keep only items whose "${step.params.field}" ${{ gt: ">", gte: ">=", lt: "<", lte: "<=", eq: "equals", contains: "contains" }[step.params.op]} ${JSON.stringify(step.params.value)}. (step "${step.id}")`;
     case "diff_with_memory":

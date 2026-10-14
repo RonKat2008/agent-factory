@@ -97,6 +97,15 @@ const Connector = z.object({
   }),
 });
 
+const Recall = z.object({
+  id: z.string(),
+  block: z.literal("recall"),
+  params: z.object({
+    query: tpl.describe("Entity or topic to look up in the fleet's shared knowledge"),
+    limit: z.number().int().min(1).max(20).optional(),
+  }),
+});
+
 export const StepSchema = z.discriminatedUnion("block", [
   FetchUrl,
   FetchRss,
@@ -109,6 +118,7 @@ export const StepSchema = z.discriminatedUnion("block", [
   RequireApproval,
   RunCode,
   Connector,
+  Recall,
 ]);
 export type Step = z.infer<typeof StepSchema>;
 export type BlockName = Step["block"];
@@ -152,6 +162,14 @@ export const AgentSpecSchema = z.object({
   tests: z.array(TestSchema).min(1),
   requiresApproval: z.boolean(),
   plan: PlanCardSchema,
+  // Chain: also run whenever the upstream agent successfully POSTS. Params may then use
+  // {{trigger.message}}, {{trigger.agentName}}, {{trigger.citations}} ({text,url}[]).
+  trigger: z
+    .object({
+      agentId: z.string().describe("id of the upstream agent"),
+      when: z.literal("posted"),
+    })
+    .optional(),
 });
 export type AgentSpec = z.infer<typeof AgentSpecSchema>;
 

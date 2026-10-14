@@ -129,3 +129,32 @@ create table if not exists custom_connectors (
   created_at timestamptz not null default now(),
   created_by_ip text
 );
+
+-- Fleet knowledge graph (entities agents have posted about).
+create table if not exists kg_entities (
+  id uuid primary key default gen_random_uuid(),
+  key text unique not null,           -- lower-cased canonical name
+  name text not null,
+  kind text not null default 'topic', -- company | product | release | person | topic
+  first_seen timestamptz not null default now(),
+  last_seen timestamptz not null default now(),
+  mentions int not null default 0
+);
+
+create table if not exists kg_mentions (
+  id uuid primary key default gen_random_uuid(),
+  entity_id uuid not null references kg_entities(id) on delete cascade,
+  agent_id uuid references agents(id) on delete cascade,
+  run_id uuid,
+  url text,
+  snippet text,
+  created_at timestamptz not null default now()
+);
+
+create index if not exists kg_mentions_entity_idx on kg_mentions (entity_id, created_at desc);
+create index if not exists kg_mentions_agent_idx on kg_mentions (agent_id, created_at desc);
+create index if not exists kg_entities_last_seen_idx on kg_entities (last_seen desc);
+
+-- Per-agent Slack (bring your own webhook) + creator IP for the short post-create edit window.
+alter table agents add column if not exists slack_webhook_enc text;
+alter table agents add column if not exists created_by_ip text;

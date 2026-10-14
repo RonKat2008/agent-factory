@@ -1,6 +1,7 @@
 // Delivery channel: Slack incoming webhook (when configured) + the outbox table (always).
 import { outboxInsert } from "@/lib/repo";
 import { getSlackWebhook } from "@/lib/connections";
+import { extractAndStore } from "@/lib/knowledge";
 
 const SLACK_TIMEOUT_MS = 8_000;
 
@@ -47,6 +48,14 @@ export async function deliver(d: { agentId: string; runId: string; message: stri
   const sent = slack === null ? true : slack.ok;
   if (slack && !slack.ok) console.error("[deliver]", slack.error);
   await record(d.agentId, d.runId, body, sent);
+  if (sent) {
+    try {
+      // Awaited but bounded (~5s) and never throws: feeds the fleet knowledge graph.
+      await extractAndStore({ agentId: d.agentId, runId: d.runId, message: d.message });
+    } catch (e) {
+      console.error("[deliver] knowledge extraction failed:", e);
+    }
+  }
   return { sent };
 }
 

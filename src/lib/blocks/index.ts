@@ -8,6 +8,7 @@ import { githubIssues } from "./github-issues";
 import { hnSearch } from "./hn-search";
 import { llm } from "./llm";
 import { runCode } from "./run-code";
+import { recall } from "./recall";
 import { requireApproval } from "./require-approval";
 import { sendSlack } from "./send-slack";
 import type { BlockContext, BlockDef } from "./types";
@@ -84,6 +85,13 @@ export const BLOCKS: Record<BlockName, BlockDef> = {
     params: "{ connector: slug, action: action name, args: [{ name, value }] (one per action param; value is literal text or a template) }",
     outputs: "{ status, data (parsed JSON or text), text (<=8k chars), items? (when the response is a list of {title,url}-like objects) }",
   },
+  recall: {
+    run: recall,
+    description:
+      "Check what the fleet already knows about X — use before posting to avoid repeating news or to add context. Searches the shared knowledge graph of entities (companies, products, releases, people, topics) that agents have already posted about.",
+    params: "{ query (entity or topic name; may be a template), limit?=5 }",
+    outputs: "{ items: { title: entity name, url, summary: 'mentioned N× by <agents>, last <date>: <snippet>' }[], text }  (items is empty when the fleet knows nothing)",
+  },
 };
 
 const EXAMPLES: Record<BlockName, string> = {
@@ -100,6 +108,7 @@ const EXAMPLES: Record<BlockName, string> = {
   require_approval: '{"id":"approve","block":"require_approval","params":{"message":"Post this digest?"}}',
   connector:
     '{"id":"wx","block":"connector","params":{"connector":"example_weather","action":"forecast","args":[{"name":"latitude","value":"37.77"},{"name":"longitude","value":"-122.42"}]}}  -> {{steps.wx.text}}, {{steps.wx.data}}  (example_weather is illustrative; use a real slug from the catalog)',
+  recall: '{"id":"known","block":"recall","params":{"query":"{{steps.page.title}}","limit":5}}  -> {{steps.known.items}}, {{steps.known.text}}',
 };
 
 /** Compact prompt-ready catalog for the builder LLM. */
