@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ActivityFeed } from "@/components/feed/activity-feed";
 import { AgentRow } from "./agent-row";
 import { StatStrip } from "./stat-strip";
+import { FactoryFloor } from "./factory-floor";
 
 const POLL_MS = 3000;
 
@@ -78,6 +79,7 @@ export function FleetBoard() {
               ))}
             </ul>
           )}
+          {agents && agents.length > 0 && <FactoryFloor agents={agents} now={now} />}
         </section>
         <ActivityFeed limit={40} title="Activity" />
       </div>

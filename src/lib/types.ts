@@ -30,6 +30,10 @@ export type Agent = {
   usefulRate: number | null; // 0-1, null without feedback
   repairs: number;
   plan: PlanCard | null;
+  /** Last 20 non-dry runs, oldest to newest (listAgents only). */
+  recent?: { status: RunStatus; kind: RunKind; startedAt: string; costUsd: number; ms: number | null }[];
+  /** Latest successfully posted message (listAgents only). */
+  lastOutput?: { message: string; at: string } | null;
 };
 
 export type EventType =

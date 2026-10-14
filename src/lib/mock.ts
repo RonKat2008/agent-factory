@@ -85,6 +85,34 @@ export const agents: Agent[] = [
   },
 ];
 
+type MockRecent = NonNullable<Agent["recent"]>;
+/** Deterministic run history: `n` runs every `everyMin` minutes ending `endAgo` minutes ago. */
+function mockRecent(n: number, everyMin: number, endAgo: number, kinds: Record<number, MockRecent[number]["kind"]>, failed: number[], cost: number): MockRecent {
+  return Array.from({ length: n }, (_, i) => ({
+    status: failed.includes(i) ? ("failed" as const) : ("succeeded" as const),
+    kind: kinds[i] ?? ("scheduled" as const),
+    startedAt: ago(endAgo + (n - 1 - i) * everyMin),
+    costUsd: cost * (0.8 + ((i * 7) % 5) / 10),
+    ms: failed.includes(i) ? 900 : 1800 + ((i * 373) % 2400),
+  }));
+}
+
+agents[0].recent = mockRecent(20, 30, 18, {}, [], 0.0005);
+agents[0].lastOutput = {
+  message: "*Daily AI agents brief*\n• Show HN: an open-source agent runtime with built-in evals — <https://news.ycombinator.com/item?id=1|source>\n• Another bullet",
+  at: ago(18),
+};
+agents[1].recent = mockRecent(20, 15, 2, { 16: "repair_test" }, [14, 15], 0.0007);
+agents[1].lastOutput = {
+  message: "*Acme shipped something*\n• Acme launched SSO for all plans — <https://agent-factory.vercel.app/demo/acme/updates|source>",
+  at: ago(2),
+};
+agents[2].recent = mockRecent(12, 60, 19, {}, [9], 0.0008);
+agents[2].lastOutput = {
+  message: "*Next.js releases*\n• Next.js 16.1 — faster Turbopack builds — <https://github.com/vercel/next.js/releases|source>",
+  at: ago(19),
+};
+
 const watcherV1: AgentSpec = {
   name: "Competitor watcher: Acme",
   schedule: "*/15 * * * *",

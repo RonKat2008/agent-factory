@@ -10,7 +10,10 @@ import type { Agent, AgentStatus } from "@/lib/types";
 import { StatusPill } from "@/components/status-pill";
 import { cn } from "@/lib/utils";
 import { HealthRing } from "./health-ring";
-import { relTime } from "@/components/time";
+import { relTime, fullTime } from "@/components/time";
+import { RunStrip } from "./run-strip";
+import { LastOutput } from "./last-output";
+import { latestRepairAt } from "./run-history";
 
 const STRIPE: Record<AgentStatus, string> = {
   live: "bg-emerald-500",
@@ -35,6 +38,7 @@ function Metric({ label, children, title }: { label: string; children: React.Rea
 export function AgentRow({ agent: a, now }: { agent: Agent; now: number }) {
   const [pending, setPending] = useState(false);
   const canRun = a.status !== "building" && a.status !== "testing";
+  const repairedAt = latestRepairAt(a.recent);
 
   async function onRun() {
     setPending(true);
@@ -52,12 +56,13 @@ export function AgentRow({ agent: a, now }: { agent: Agent; now: number }) {
   return (
     <li
       className={cn(
-        "relative flex flex-col gap-3 overflow-hidden rounded-[3px] border bg-[#FBFAF7] py-3 pl-5 pr-3 shadow-[0_1px_0_rgba(0,0,0,0.04)] lg:flex-row lg:items-center",
+        "relative flex flex-col gap-2.5 overflow-hidden rounded-[3px] border bg-[#FBFAF7] py-3 pl-5 pr-3 shadow-[0_1px_0_rgba(0,0,0,0.04)]",
         a.status === "repairing" ? "border-amber-400" : a.status === "broken" || a.status === "needs_human" ? "border-red-300" : "border-stone-300",
       )}
     >
       <span className={cn("absolute inset-y-0 left-0 w-1.5", STRIPE[a.status])} aria-hidden />
 
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         <HealthRing value={a.health} />
         <div className="min-w-0">
@@ -74,12 +79,13 @@ export function AgentRow({ agent: a, now }: { agent: Agent; now: number }) {
               </span>
             )}
             <StatusPill status={a.status} />
-            {a.repairs > 0 && (
+            {(a.repairs > 0 || repairedAt) && (
               <span
                 className="inline-flex items-center gap-1 rounded-[2px] border border-violet-300 bg-violet-50 px-1.5 py-0.5 font-mono text-[11px] text-violet-700"
-                title={`${a.repairs} automatic repair${a.repairs === 1 ? "" : "s"}`}
+                title={`${a.repairs} automatic repair${a.repairs === 1 ? "" : "s"}${repairedAt ? ` · last ${fullTime(repairedAt)}` : ""}`}
               >
-                <Wrench className="size-3" aria-hidden /> {a.repairs} repair{a.repairs === 1 ? "" : "s"}
+                <Wrench className="size-3" aria-hidden />
+                {repairedAt ? `repaired ${relTime(repairedAt, now)}` : `${a.repairs} repair${a.repairs === 1 ? "" : "s"}`}
               </span>
             )}
           </div>
@@ -109,6 +115,15 @@ export function AgentRow({ agent: a, now }: { agent: Agent; now: number }) {
         {pending ? <Loader2 className="size-3.5 animate-spin" aria-hidden /> : <Play className="size-3.5" aria-hidden />}
         {pending ? "Starting…" : "Run now"}
       </button>
+      </div>
+
+      <div className="grid items-center gap-x-4 gap-y-2 border-t border-stone-200 pt-2.5 sm:grid-cols-[auto_minmax(0,1fr)]">
+        <div className="flex items-end gap-2">
+          <RunStrip recent={a.recent} />
+          <span className="pb-px font-mono text-[10px] text-stone-500">last {a.recent?.length ?? 0}</span>
+        </div>
+        <LastOutput output={a.lastOutput} now={now} />
+      </div>
     </li>
   );
 }

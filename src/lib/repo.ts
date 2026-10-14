@@ -137,9 +137,56 @@ function mapAgent(r: Row): Agent {
   };
 }
 
+type RecentRun = NonNullable<Agent["recent"]>[number];
+
+/** Last 20 non-dry runs (oldest→newest) and latest posted message per agent, in two set-based queries. */
+async function loadAgentActivity(): Promise<{
+  recent: Map<string, RecentRun[]>;
+  last: Map<string, NonNullable<Agent["lastOutput"]>>;
+}> {
+  const [runRows, outRows] = await Promise.all([
+    query<Row>(`
+      select agent_id, status, kind, started_at, cost_usd,
+             (extract(epoch from (finished_at - started_at)) * 1000)::int as ms
+      from (
+        select r.*, row_number() over (partition by agent_id order by started_at desc) rn
+        from runs r where kind in ('scheduled','manual','repair_test')
+      ) t where rn <= 20 order by agent_id, started_at asc`),
+    query<Row>(`
+      select distinct on (agent_id) agent_id, output ->> 'message' as message, started_at
+      from runs
+      where status = 'succeeded' and kind in ('scheduled','manual') and output ->> 'posted' = 'true'
+      order by agent_id, started_at desc`),
+  ]);
+  const recent = new Map<string, RecentRun[]>();
+  for (const r of runRows) {
+    const id = String(r.agent_id);
+    const list = recent.get(id) ?? [];
+    list.push({
+      status: r.status as RunStatus,
+      kind: r.kind as RunKind,
+      startedAt: isoReq(r.started_at),
+      costUsd: num(r.cost_usd),
+      ms: r.ms == null ? null : Number(r.ms),
+    });
+    recent.set(id, list);
+  }
+  const last = new Map<string, NonNullable<Agent["lastOutput"]>>();
+  for (const r of outRows) {
+    if (r.message) last.set(String(r.agent_id), { message: String(r.message), at: isoReq(r.started_at) });
+  }
+  return { recent, last };
+}
+
 export async function listAgents(): Promise<Agent[]> {
-  const rows = await query<Row>(`${AGENT_SELECT} order by a.created_at asc`);
-  return rows.map(mapAgent);
+  const [rows, activity] = await Promise.all([
+    query<Row>(`${AGENT_SELECT} order by a.created_at asc`),
+    loadAgentActivity(),
+  ]);
+  return rows.map((r) => {
+    const id = String(r.id);
+    return { ...mapAgent(r), recent: activity.recent.get(id) ?? [], lastOutput: activity.last.get(id) ?? null };
+  });
 }
 
 export async function getAgent(id: string): Promise<Agent | null> {
