@@ -561,3 +561,19 @@ export async function demoSet(key: string, value: unknown): Promise<void> {
     [key, JSON.stringify(value ?? null)],
   );
 }
+
+/** Attaches a comment to the latest comment-less feedback row of this rating for the run. Null when none. */
+export async function attachFeedbackComment(f: {
+  runId: string;
+  rating: "useful" | "not_useful";
+  comment: string;
+}): Promise<{ agentId: string } | null> {
+  const rows = await query<Row>(
+    `update feedback set comment = $3
+     where id = (select id from feedback where run_id = $1 and rating = $2 and comment is null
+                 order by created_at desc limit 1)
+     returning agent_id`,
+    [f.runId, f.rating, f.comment],
+  );
+  return rows[0] ? { agentId: String(rows[0].agent_id) } : null;
+}

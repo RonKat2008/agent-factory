@@ -3,12 +3,21 @@ import { fail, ok, type BlockRunner, type Item } from "./types";
 const MIN_ENTRY_CHARS = 15;
 const MAX_CHANGES = 10;
 
+const MAX_SUMMARY_CHARS = 400;
+
+/** "title (url)", plus the summary when it adds information (release notes, feed blurbs) so later steps can use it. */
+function itemLine(i: Item): string {
+  const base = `${i.title} (${i.url})`;
+  const summary = i.summary?.trim();
+  return summary && summary !== i.title ? `${base}: ${summary.slice(0, MAX_SUMMARY_CHARS)}` : base;
+}
+
 function normalize(input: unknown): string[] | null {
   if (typeof input === "string") {
     return input.split(/\n+/).map((l) => l.trim()).filter((l) => l.length >= MIN_ENTRY_CHARS);
   }
   if (Array.isArray(input)) {
-    return input.map((i) => (typeof i === "string" ? i : `${(i as Item).title} (${(i as Item).url})`)).filter(Boolean);
+    return input.map((i) => (typeof i === "string" ? i : itemLine(i as Item))).filter(Boolean);
   }
   return null;
 }
