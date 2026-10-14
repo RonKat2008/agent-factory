@@ -137,7 +137,7 @@ export type ChainResearch = { kind: "exa"; connector: string; action: string } |
 export function chainSeedAgent(watcherId: string, research: ChainResearch): SeedAgent {
   const exa = research.kind === "exa";
   const researchStep = exa
-    ? { id: "research", block: "connector" as const, params: { connector: research.connector, action: research.action, args: [{ name: "query", value: "{{steps.q.text}}" }] } }
+    ? { id: "research", block: "connector" as const, params: { connector: research.connector, action: research.action, args: [{ name: "query", value: "{{steps.q.text}}" }, { name: "objective", value: "Find how competitors and the market handle these product features, for a short competitive analysis" }] } }
     : { id: "research", block: "hn_search" as const, params: { query: "{{steps.q.text}}", sinceHours: 8760, limit: 8 } };
   const spec: AgentSpec = {
     name: SEED_NAMES.deepDive,
