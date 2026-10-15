@@ -456,7 +456,7 @@ agent-factory/
 
 ## Team
 
-TBD (names and roles to be added before submission).
+Ronit & Vidya 
 
 ---
 
